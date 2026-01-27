@@ -2,31 +2,48 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Monorepo Structure
+
+This is a pnpm workspace monorepo with Turborepo:
+
+```
+busnoti/
+├── pnpm-workspace.yaml
+├── package.json                    # Root workspace
+├── turbo.json                      # Turborepo config
+├── prisma/
+│   └── schema.prisma               # Prisma schema (root)
+└── packages/
+    ├── api/                        # NestJS backend
+    ├── shared/                     # Shared types/DTOs
+    └── web/                        # Next.js frontend
+```
+
 ## Commands
 
 ```bash
-# Development
-npm run start:dev          # Watch mode
-npm run start:debug        # Debug with --inspect
+# Development (all packages)
+pnpm dev                    # Run all dev servers (turbo)
+pnpm dev:api                # API dev server only
+pnpm dev:web                # Web dev server only
 
-# Build & Production
-npm run build              # Compile TypeScript
-npm run start:prod         # Run compiled (node dist/main)
+# Build
+pnpm build                  # Build all packages (turbo)
+pnpm --filter @busnoti/api build
+pnpm --filter @busnoti/web build
 
 # Testing
-npm test                   # Unit tests
-npm run test:watch         # Watch mode
-npm run test:e2e           # E2E tests
-npm run test:cov           # Coverage
-npx jest path/to/file.spec.ts  # Single test
+pnpm test                   # Run all tests (turbo)
+pnpm --filter @busnoti/api test
+pnpm --filter @busnoti/api test:watch
+pnpm --filter @busnoti/api test:e2e
 
 # Lint & Format
-npm run lint               # ESLint with auto-fix
-npm run format             # Prettier
+pnpm --filter @busnoti/api lint
 
 # Database
-npx prisma generate        # Regenerate client after schema change
-npx prisma db push         # Push schema to SQLite
+pnpm db:generate            # Regenerate Prisma client
+pnpm db:push                # Push schema to SQLite
 ```
 
 ## Architecture
@@ -38,13 +55,29 @@ npx prisma db push         # Push schema to SQLite
 Scheduler (30s) → BusProvider (외부 API) → NotificationsService → AlertChannel (Push/Email)
 ```
 
+### Packages
+
+**@busnoti/shared** - Shared types and DTOs
+- `src/types/bus.ts` - BusProvider, StationDto, RouteDto, ArrivalInfoDto
+- `src/types/notification.ts` - AlertChannel, AlertMessage, NotificationTarget
+- `src/types/prisma.ts` - Re-exported Prisma types (Region, etc.)
+- `src/dto/` - Shared DTOs (subscription, stop)
+
+**@busnoti/api** - NestJS backend
+- `src/providers/` - Bus API providers (Gyeonggi, Seoul)
+- `src/modules/` - NestJS feature modules
+- `src/prisma/` - Prisma service and module
+- `src/config/` - Configuration
+
+**@busnoti/web** - Next.js frontend
+
 ### Key Interfaces
 
-**BusProvider** (`src/providers/bus-provider.interface.ts`) - 지역별 버스 API 추상화
+**BusProvider** (`packages/shared/src/types/bus.ts`) - 지역별 버스 API 추상화
 - `searchStations(keyword)` - 정류소 검색
 - `getArrivalInfo(stationId)` - 도착정보 조회
 
-**AlertChannel** (`src/modules/notifications/channels/alert-channel.interface.ts`) - 알림 채널 추상화
+**AlertChannel** (`packages/shared/src/types/notification.ts`) - 알림 채널 추상화
 - `send(target, message)` - 알림 발송
 - `isAvailable(target)` - 채널 사용 가능 여부
 
@@ -53,8 +86,20 @@ Scheduler (30s) → BusProvider (외부 API) → NotificationsService → AlertC
 
 ## Code Style Rules
 
+### Shared Package Imports
+Import shared types from `@busnoti/shared`:
+
+```typescript
+import {
+  BusProvider,
+  StationDto,
+  CreateSubscriptionDto,
+  Region,
+} from '@busnoti/shared';
+```
+
 ### No Barrel Exports
-Do NOT use barrel exports (index.ts re-exports). Always import directly from the source file.
+Do NOT use barrel exports (index.ts re-exports) within packages. Always import directly from the source file.
 
 ```typescript
 // Bad - barrel export
@@ -65,19 +110,15 @@ import { StopsModule } from './modules/stops/stops.module';
 ```
 
 ### Prisma Types
-Import Prisma types directly from `@prisma/client`:
+Import Prisma types from `@busnoti/shared` or directly from `@prisma/client`:
 
 ```typescript
-// Good
+// From shared (preferred)
+import { Region, Subscription } from '@busnoti/shared';
+
+// Or directly
 import { Region, Subscription } from '@prisma/client';
 ```
-
-## Project Structure
-
-- `src/prisma/` - Prisma service and module
-- `src/providers/` - External API providers (Gyeonggi, Seoul)
-- `src/modules/` - NestJS feature modules
-- `src/config/` - Configuration
 
 ## API Keys Required
 

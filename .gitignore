@@ -3,6 +3,11 @@ node_modules/
 
 # Build output
 dist/
+.next/
+out/
+
+# Turborepo
+.turbo/
 
 # Test coverage
 coverage/
@@ -29,6 +34,7 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Database
 *.sqlite
@@ -46,4 +52,11 @@ temp/
 # TypeScript cache
 *.tsbuildinfo
 
+# Prisma
 /generated/prisma
+
+# pnpm
+.pnpm-store/
+
+# Vercel
+.vercel/
