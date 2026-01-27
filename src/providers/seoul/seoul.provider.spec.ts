@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { SeoulProvider } from './seoul.provider';

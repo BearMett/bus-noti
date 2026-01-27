@@ -288,8 +288,9 @@ export class GyeonggiProvider implements BusProvider {
       throw new Error('Invalid GBIS API response format');
     }
 
-    // GBIS uses "0" for success, "4" for no results
-    if (resultCode !== '0' && resultCode !== '4') {
+    // GBIS uses "0" for success, "4" for no results (may be string or number)
+    const code = String(resultCode);
+    if (code !== '0' && code !== '4') {
       const message =
         response.response.msgHeader.resultMessage || 'Unknown error';
       throw new Error(`GBIS API error (${resultCode}): ${message}`);

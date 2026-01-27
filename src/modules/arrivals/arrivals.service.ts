@@ -44,7 +44,10 @@ export class ArrivalsService {
     );
 
     const allArrivals = await this.getArrivalsByStation(stationId, region);
-    return allArrivals.filter((arrival) => arrival.routeId === routeId);
+    // Compare as strings to handle type mismatch (API may return number)
+    return allArrivals.filter(
+      (arrival) => String(arrival.routeId) === String(routeId),
+    );
   }
 
   private getProviderByRegion(region: Region): BusProvider {
