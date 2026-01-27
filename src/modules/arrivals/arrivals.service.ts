@@ -1,24 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Region } from '../../domain';
-import { ArrivalInfoDto } from '../../providers';
-import { GyeonggiProvider } from '../../providers/gyeonggi';
+import { Region } from '@prisma/client';
+import { BusProvider, ArrivalInfoDto } from '../../providers/bus-provider.interface';
+import { GyeonggiProvider } from '../../providers/gyeonggi/gyeonggi.provider';
+import { SeoulProvider } from '../../providers/seoul/seoul.provider';
 
-/**
- * ArrivalsService handles bus arrival information retrieval.
- * Primarily used by the notification scheduler to check arrival times.
- */
 @Injectable()
 export class ArrivalsService {
   private readonly logger = new Logger(ArrivalsService.name);
+  private readonly providers: Map<Region, BusProvider>;
 
-  constructor(private readonly gyeonggiProvider: GyeonggiProvider) {}
+  constructor(
+    private readonly gyeonggiProvider: GyeonggiProvider,
+    private readonly seoulProvider: SeoulProvider,
+  ) {
+    this.providers = new Map<Region, BusProvider>([
+      [Region.GG, this.gyeonggiProvider],
+      [Region.SEOUL, this.seoulProvider],
+    ]);
+  }
 
-  /**
-   * Get all arrivals at a station
-   * @param stationId - The station ID to query
-   * @param region - The region (defaults to Gyeonggi)
-   * @returns Array of arrival information for all routes at the station
-   */
   async getArrivalsByStation(
     stationId: string,
     region: Region = Region.GG,
@@ -31,13 +31,6 @@ export class ArrivalsService {
     return provider.getArrivalInfo(stationId);
   }
 
-  /**
-   * Get arrivals for a specific route at a station
-   * @param stationId - The station ID to query
-   * @param routeId - The route ID to filter by
-   * @param region - The region (defaults to Gyeonggi)
-   * @returns Array of arrival information for the specified route
-   */
   async getArrivalsByRoute(
     stationId: string,
     routeId: string,
@@ -51,23 +44,12 @@ export class ArrivalsService {
     return allArrivals.filter((arrival) => arrival.routeId === routeId);
   }
 
-  /**
-   * Get the appropriate provider for the given region
-   * Currently only supports Gyeonggi region
-   */
-  private getProviderByRegion(region: Region): GyeonggiProvider {
-    switch (region) {
-      case Region.GG:
-        return this.gyeonggiProvider;
-      case Region.SEOUL:
-        // TODO: Implement Seoul provider
-        this.logger.warn(
-          'Seoul region not yet supported, falling back to Gyeonggi',
-        );
-        return this.gyeonggiProvider;
-      default:
-        this.logger.warn(`Unknown region ${region}, falling back to Gyeonggi`);
-        return this.gyeonggiProvider;
+  private getProviderByRegion(region: Region): BusProvider {
+    const provider = this.providers.get(region);
+    if (!provider) {
+      this.logger.warn(`Unknown region ${region}, falling back to Gyeonggi`);
+      return this.gyeonggiProvider;
     }
+    return provider;
   }
 }

@@ -1,4 +1,4 @@
-import { Region } from '../domain/region.enum';
+import { Region } from '@prisma/client';
 
 export interface StationDto {
   stationId: string;

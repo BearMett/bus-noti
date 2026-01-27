@@ -1,18 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Notification, Subscription } from '../../domain';
-import { SubscriptionsModule } from '../subscriptions';
-import { ArrivalsModule } from '../arrivals';
-import { PushChannel, EmailChannel } from './channels';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { ArrivalsModule } from '../arrivals/arrivals.module';
+import { PushChannel } from './channels/push.channel';
+import { EmailChannel } from './channels/email.channel';
 import { NotificationsService } from './notifications.service';
 import { NotificationScheduler } from './notification.scheduler';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Notification, Subscription]),
-    SubscriptionsModule,
-    ArrivalsModule,
-  ],
+  imports: [SubscriptionsModule, ArrivalsModule],
   providers: [
     PushChannel,
     EmailChannel,

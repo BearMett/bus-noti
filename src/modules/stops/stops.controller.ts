@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { StopsService } from './stops.service';
 import { SearchStopsQueryDto } from './dto/search-stops.dto';
-import { Region } from '../../domain';
-import { StationDto, RouteDto, ArrivalInfoDto } from '../../providers';
+import { Region } from '@prisma/client';
+import { StationDto, RouteDto, ArrivalInfoDto } from '../../providers/bus-provider.interface';
 
 @Controller('stops')
 export class StopsController {

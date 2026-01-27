@@ -11,7 +11,7 @@ import {
   ArrayMinSize,
   IsIn,
 } from 'class-validator';
-import { Region } from '../../../domain';
+import { Region } from '@prisma/client';
 
 export class UpdateSubscriptionDto {
   @IsOptional()

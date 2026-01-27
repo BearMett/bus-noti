@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Stop, Route, StopRoute } from '../../domain';
-import { GyeonggiProvider } from '../../providers/gyeonggi';
+import { GyeonggiProvider } from '../../providers/gyeonggi/gyeonggi.provider';
+import { SeoulProvider } from '../../providers/seoul/seoul.provider';
 import { StopsService } from './stops.service';
 import { StopsController } from './stops.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Stop, Route, StopRoute])],
   controllers: [StopsController],
-  providers: [GyeonggiProvider, StopsService],
-  exports: [GyeonggiProvider, StopsService],
+  providers: [GyeonggiProvider, SeoulProvider, StopsService],
+  exports: [GyeonggiProvider, SeoulProvider, StopsService],
 })
 export class StopsModule {}

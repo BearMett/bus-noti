@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Region } from '../../../domain';
+import { Region } from '@prisma/client';
 
 export class SearchStopsQueryDto {
   @IsOptional()

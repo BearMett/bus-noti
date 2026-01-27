@@ -1,14 +1,12 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import configuration from './config/configuration';
+import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './modules/health/health.module';
-import { StopsModule } from './modules/stops';
-import { SubscriptionsModule } from './modules/subscriptions';
-import { NotificationsModule } from './modules/notifications';
+import { StopsModule } from './modules/stops/stops.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,26 +14,7 @@ import { NotificationsModule } from './modules/notifications';
       load: [configuration],
       isGlobal: true,
     }),
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const dbPath =
-          configService.get<string>('database.path') ?? './data/busnoti.sqlite';
-        const dbDir = path.dirname(dbPath);
-
-        // Ensure database directory exists
-        if (!fs.existsSync(dbDir)) {
-          fs.mkdirSync(dbDir, { recursive: true });
-        }
-
-        return {
-          type: 'better-sqlite3',
-          database: dbPath,
-          autoLoadEntities: true,
-          synchronize: true, // For development only
-        };
-      },
-    }),
+    PrismaModule,
     ScheduleModule.forRoot(),
     HealthModule,
     StopsModule,

@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// 지역 구분
+enum Region {
+  GG    // 경기도
+  SEOUL // 서울
+}
+
+// 정류소
+model Stop {
+  id         String   @id @default(uuid())
+  externalId String   // API 정류소 ID
+  region     Region
+  name       String
+  arsId      String?  // 정류소번호 (서울용)
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  stopRoutes StopRoute[]
+
+  @@unique([region, externalId])
+  @@index([externalId])
+  @@index([region])
+}
+
+// 노선
+model Route {
+  id         String   @id @default(uuid())
+  externalId String   // API 노선 ID
+  region     Region
+  name       String   // 노선명 (예: 5000)
+  routeType  String?  // 노선 유형 (일반, 광역 등)
+  createdAt  DateTime @default(now())
+
+  stopRoutes StopRoute[]
+
+  @@unique([region, externalId])
+  @@index([externalId])
+  @@index([region])
+}
+
+// 정류소-노선 매핑
+model StopRoute {
+  id       String @id @default(uuid())
+  stopId   String
+  routeId  String
+  staOrder Int    // 정류소 순번
+
+  stop  Stop  @relation(fields: [stopId], references: [id], onDelete: Cascade)
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@unique([stopId, routeId])
+  @@index([stopId])
+  @@index([routeId])
+}
+
+// 알림 구독
+model Subscription {
+  id              String   @id @default(uuid())
+  userId          String
+  region          Region
+  stationId       String   // 외부 API 정류소 ID
+  routeId         String   // 외부 API 노선 ID
+  staOrder        Int?     // 정류소 순번
+  leadTimeMinutes Int      @default(5) // n분 전 알림
+  channels        String   // JSON: ["push", "email"]
+  activeTimeStart String?  // HH:mm 형식
+  activeTimeEnd   String?  // HH:mm 형식
+  activeDays      String?  // JSON: [0, 1, 2, 3, 4, 5, 6]
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([stationId])
+  @@index([routeId])
+  @@index([isActive])
+}
+
+// 발송 기록 (중복 방지용)
+model Notification {
+  id                 String   @id @default(uuid())
+  subscriptionId     String
+  plateNo            String   // 차량번호 (idempotency key)
+  predictedArrivalAt DateTime // 예측 도착시간
+  sentAt             DateTime @default(now())
+  channel            String   // push | email
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, plateNo, predictedArrivalAt])
+  @@index([subscriptionId])
+}

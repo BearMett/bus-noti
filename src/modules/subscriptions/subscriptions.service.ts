@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Subscription } from '../../domain';
+import { Region, Subscription } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 
@@ -9,10 +8,7 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
 
-  constructor(
-    @InjectRepository(Subscription)
-    private readonly subscriptionRepository: Repository<Subscription>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a new subscription
@@ -20,23 +16,26 @@ export class SubscriptionsService {
   async create(dto: CreateSubscriptionDto): Promise<Subscription> {
     this.logger.debug(`Creating subscription for user: ${dto.userId}`);
 
-    const subscription = this.subscriptionRepository.create({
-      userId: dto.userId,
-      region: dto.region,
-      stationId: dto.stationId,
-      routeId: dto.routeId,
-      staOrder: dto.staOrder,
-      leadTimeMinutes: dto.leadTimeMinutes,
-      channels: JSON.stringify(dto.channels),
-      activeTimeStart: dto.activeTimeStart,
-      activeTimeEnd: dto.activeTimeEnd,
-      activeDays: dto.activeDays ? JSON.stringify(dto.activeDays) : undefined,
-      isActive: true,
+    const subscription = await this.prisma.subscription.create({
+      data: {
+        userId: dto.userId,
+        region: dto.region as Region,
+        stationId: dto.stationId,
+        routeId: dto.routeId,
+        staOrder: dto.staOrder,
+        leadTimeMinutes: dto.leadTimeMinutes,
+        channels: JSON.stringify(dto.channels),
+        activeTimeStart: dto.activeTimeStart,
+        activeTimeEnd: dto.activeTimeEnd,
+        activeDays: dto.activeDays ? JSON.stringify(dto.activeDays) : undefined,
+        isActive: true,
+      },
     });
 
-    const saved = await this.subscriptionRepository.save(subscription);
-    this.logger.log(`Created subscription ${saved.id} for user: ${dto.userId}`);
-    return saved;
+    this.logger.log(
+      `Created subscription ${subscription.id} for user: ${dto.userId}`,
+    );
+    return subscription;
   }
 
   /**
@@ -44,9 +43,9 @@ export class SubscriptionsService {
    */
   async findByUser(userId: string): Promise<Subscription[]> {
     this.logger.debug(`Finding subscriptions for user: ${userId}`);
-    return this.subscriptionRepository.find({
+    return this.prisma.subscription.findMany({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -55,7 +54,7 @@ export class SubscriptionsService {
    */
   async findById(id: string): Promise<Subscription> {
     this.logger.debug(`Finding subscription by ID: ${id}`);
-    const subscription = await this.subscriptionRepository.findOne({
+    const subscription = await this.prisma.subscription.findUnique({
       where: { id },
     });
 
@@ -71,7 +70,7 @@ export class SubscriptionsService {
    */
   async findActive(): Promise<Subscription[]> {
     this.logger.debug('Finding all active subscriptions');
-    return this.subscriptionRepository.find({
+    return this.prisma.subscription.findMany({
       where: { isActive: true },
     });
   }
@@ -86,10 +85,12 @@ export class SubscriptionsService {
     await this.findById(id);
 
     // Build update object
-    const updateData: Partial<Subscription> = {};
+    const updateData: Parameters<
+      typeof this.prisma.subscription.update
+    >[0]['data'] = {};
 
     if (dto.userId !== undefined) updateData.userId = dto.userId;
-    if (dto.region !== undefined) updateData.region = dto.region;
+    if (dto.region !== undefined) updateData.region = dto.region as Region;
     if (dto.stationId !== undefined) updateData.stationId = dto.stationId;
     if (dto.routeId !== undefined) updateData.routeId = dto.routeId;
     if (dto.staOrder !== undefined) updateData.staOrder = dto.staOrder;
@@ -105,10 +106,13 @@ export class SubscriptionsService {
       updateData.activeDays = JSON.stringify(dto.activeDays);
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
 
-    await this.subscriptionRepository.update(id, updateData);
+    const updated = await this.prisma.subscription.update({
+      where: { id },
+      data: updateData,
+    });
 
     this.logger.log(`Updated subscription: ${id}`);
-    return this.findById(id);
+    return updated;
   }
 
   /**
@@ -119,7 +123,9 @@ export class SubscriptionsService {
 
     // Verify subscription exists before deleting
     await this.findById(id);
-    await this.subscriptionRepository.delete(id);
+    await this.prisma.subscription.delete({
+      where: { id },
+    });
 
     this.logger.log(`Deleted subscription: ${id}`);
   }

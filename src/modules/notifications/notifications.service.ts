@@ -1,21 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { Notification } from '../../domain';
+import { Notification } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { PushChannel } from './channels/push.channel';
+import { EmailChannel } from './channels/email.channel';
 import {
-  PushChannel,
-  EmailChannel,
   AlertMessage,
   NotificationTarget,
-} from './channels';
+} from './channels/alert-channel.interface';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
   constructor(
-    @InjectRepository(Notification)
-    private readonly notificationRepository: Repository<Notification>,
+    private readonly prisma: PrismaService,
     private readonly pushChannel: PushChannel,
     private readonly emailChannel: EmailChannel,
   ) {}
@@ -34,11 +32,14 @@ export class NotificationsService {
     const timeWindowStart = new Date(arrivalTime.getTime() - TEN_MINUTES_MS);
     const timeWindowEnd = new Date(arrivalTime.getTime() + TEN_MINUTES_MS);
 
-    const existingNotification = await this.notificationRepository.findOne({
+    const existingNotification = await this.prisma.notification.findFirst({
       where: {
         subscriptionId,
         plateNo,
-        predictedArrivalAt: Between(timeWindowStart, timeWindowEnd),
+        predictedArrivalAt: {
+          gte: timeWindowStart,
+          lte: timeWindowEnd,
+        },
       },
     });
 
@@ -61,20 +62,21 @@ export class NotificationsService {
     arrivalTime: Date,
     channel: string,
   ): Promise<Notification> {
-    const notification = this.notificationRepository.create({
-      subscriptionId,
-      plateNo,
-      predictedArrivalAt: arrivalTime,
-      sentAt: new Date(),
-      channel,
+    const notification = await this.prisma.notification.create({
+      data: {
+        subscriptionId,
+        plateNo,
+        predictedArrivalAt: arrivalTime,
+        sentAt: new Date(),
+        channel,
+      },
     });
 
-    const saved = await this.notificationRepository.save(notification);
     this.logger.debug(
-      `Recorded notification ${saved.id} for subscription ${subscriptionId} via ${channel}`,
+      `Recorded notification ${notification.id} for subscription ${subscriptionId} via ${channel}`,
     );
 
-    return saved;
+    return notification;
   }
 
   /**

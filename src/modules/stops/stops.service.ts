@@ -1,12 +1,13 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Region } from '../../domain';
+import { Injectable, Logger } from '@nestjs/common';
+import { Region } from '@prisma/client';
 import {
   BusProvider,
   StationDto,
   RouteDto,
   ArrivalInfoDto,
-} from '../../providers';
-import { GyeonggiProvider } from '../../providers/gyeonggi';
+} from '../../providers/bus-provider.interface';
+import { GyeonggiProvider } from '../../providers/gyeonggi/gyeonggi.provider';
+import { SeoulProvider } from '../../providers/seoul/seoul.provider';
 
 @Injectable()
 export class StopsService {
@@ -14,29 +15,22 @@ export class StopsService {
   private readonly providers: Map<Region, BusProvider>;
 
   constructor(
-    @Inject(GyeonggiProvider)
     private readonly gyeonggiProvider: GyeonggiProvider,
+    private readonly seoulProvider: SeoulProvider,
   ) {
-    // Register providers by region
-    this.providers = new Map<Region, BusProvider>();
-    this.providers.set(Region.GG, this.gyeonggiProvider);
+    this.providers = new Map<Region, BusProvider>([
+      [Region.GG, this.gyeonggiProvider],
+      [Region.SEOUL, this.seoulProvider],
+    ]);
   }
 
-  /**
-   * Get the appropriate provider for a region
-   * Defaults to Gyeonggi if region is not specified or not implemented
-   */
   private getProvider(region?: Region): BusProvider {
     if (region && this.providers.has(region)) {
       return this.providers.get(region)!;
     }
-    // Default to Gyeonggi since Seoul is not implemented yet
     return this.gyeonggiProvider;
   }
 
-  /**
-   * Search stations by keyword
-   */
   async searchByKeyword(
     keyword: string,
     region?: Region,
@@ -48,9 +42,6 @@ export class StopsService {
     return provider.searchStations(keyword);
   }
 
-  /**
-   * Search nearby stations by location
-   */
   async searchByLocation(
     lat: number,
     lng: number,
@@ -63,9 +54,6 @@ export class StopsService {
     return provider.getStationsAround(lat, lng);
   }
 
-  /**
-   * Get routes passing through a station
-   */
   async getRoutesByStation(
     stationId: string,
     region?: Region,
@@ -77,9 +65,6 @@ export class StopsService {
     return provider.getRoutesByStation(stationId);
   }
 
-  /**
-   * Get arrival information for a station
-   */
   async getArrivalInfo(
     stationId: string,
     region?: Region,

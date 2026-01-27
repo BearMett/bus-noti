@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import { Region } from '../../domain/region.enum';
+import { Region } from '@prisma/client';
 import {
   BusProvider,
   StationDto,
