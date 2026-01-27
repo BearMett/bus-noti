@@ -3,6 +3,7 @@ import { Notification } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PushChannel } from './channels/push.channel';
 import { EmailChannel } from './channels/email.channel';
+import { ConsoleChannel } from './channels/console.channel';
 import {
   AlertMessage,
   NotificationTarget,
@@ -16,6 +17,7 @@ export class NotificationsService {
     private readonly prisma: PrismaService,
     private readonly pushChannel: PushChannel,
     private readonly emailChannel: EmailChannel,
+    private readonly consoleChannel: ConsoleChannel,
   ) {}
 
   /**
@@ -111,6 +113,12 @@ export class NotificationsService {
               this.logger.warn(
                 `Email channel not available for user ${target.userId}`,
               );
+            }
+            break;
+
+          case 'console':
+            if (this.consoleChannel.isAvailable(target)) {
+              success = await this.consoleChannel.send(target, message);
             }
             break;
 

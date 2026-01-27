@@ -123,7 +123,6 @@ export class SeoulProvider implements BusProvider {
    * Note: Seoul API doesn't have a direct endpoint for this.
    * Returns empty array as per specification.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getStationsAround(_lat: number, _lng: number): Promise<StationDto[]> {
     // Seoul API doesn't provide a direct getStationsAround endpoint
     // If needed, this could be implemented by:

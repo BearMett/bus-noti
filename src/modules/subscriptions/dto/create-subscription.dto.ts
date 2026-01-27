@@ -36,8 +36,8 @@ export class CreateSubscriptionDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsIn(['push', 'email'], { each: true })
-  channels: ('push' | 'email')[];
+  @IsIn(['push', 'email', 'console'], { each: true })
+  channels: ('push' | 'email' | 'console')[];
 
   @IsOptional()
   @IsString()
