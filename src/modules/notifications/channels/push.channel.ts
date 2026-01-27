@@ -48,7 +48,10 @@ export class PushChannel implements AlertChannel {
     );
   }
 
-  async send(target: NotificationTarget, message: AlertMessage): Promise<boolean> {
+  async send(
+    target: NotificationTarget,
+    message: AlertMessage,
+  ): Promise<boolean> {
     if (!this.isAvailable(target)) {
       this.logger.warn(
         `Push notification not available for user ${target.userId}`,

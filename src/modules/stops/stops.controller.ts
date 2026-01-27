@@ -8,7 +8,11 @@ import {
 import { StopsService } from './stops.service';
 import { SearchStopsQueryDto } from './dto/search-stops.dto';
 import { Region } from '@prisma/client';
-import { StationDto, RouteDto, ArrivalInfoDto } from '../../providers/bus-provider.interface';
+import {
+  StationDto,
+  RouteDto,
+  ArrivalInfoDto,
+} from '../../providers/bus-provider.interface';
 
 @Controller('stops')
 export class StopsController {

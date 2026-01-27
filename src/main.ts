@@ -27,4 +27,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚌 Bus Notification Service is running on port ${port}`);
 }
-bootstrap();
+void bootstrap();

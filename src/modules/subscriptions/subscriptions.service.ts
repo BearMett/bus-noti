@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Region, Subscription } from '@prisma/client';
+import { Subscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
@@ -19,7 +19,7 @@ export class SubscriptionsService {
     const subscription = await this.prisma.subscription.create({
       data: {
         userId: dto.userId,
-        region: dto.region as Region,
+        region: dto.region,
         stationId: dto.stationId,
         routeId: dto.routeId,
         staOrder: dto.staOrder,
@@ -90,7 +90,7 @@ export class SubscriptionsService {
     >[0]['data'] = {};
 
     if (dto.userId !== undefined) updateData.userId = dto.userId;
-    if (dto.region !== undefined) updateData.region = dto.region as Region;
+    if (dto.region !== undefined) updateData.region = dto.region;
     if (dto.stationId !== undefined) updateData.stationId = dto.stationId;
     if (dto.routeId !== undefined) updateData.routeId = dto.routeId;
     if (dto.staOrder !== undefined) updateData.staOrder = dto.staOrder;

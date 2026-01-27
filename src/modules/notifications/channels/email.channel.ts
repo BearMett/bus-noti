@@ -53,7 +53,10 @@ export class EmailChannel implements AlertChannel {
     return this.transporter !== null && !!target.email;
   }
 
-  async send(target: NotificationTarget, message: AlertMessage): Promise<boolean> {
+  async send(
+    target: NotificationTarget,
+    message: AlertMessage,
+  ): Promise<boolean> {
     if (!this.isAvailable(target)) {
       this.logger.warn(
         `Email notification not available for user ${target.userId}`,
@@ -86,7 +89,7 @@ export class EmailChannel implements AlertChannel {
   }
 
   private formatHtmlBody(message: AlertMessage): string {
-    let html = `
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>

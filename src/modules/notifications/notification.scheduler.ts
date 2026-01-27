@@ -3,7 +3,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { ArrivalsService } from '../arrivals/arrivals.service';
 import { NotificationsService } from './notifications.service';
-import { AlertMessage, NotificationTarget } from './channels/alert-channel.interface';
+import {
+  AlertMessage,
+  NotificationTarget,
+} from './channels/alert-channel.interface';
 
 @Injectable()
 export class NotificationScheduler {

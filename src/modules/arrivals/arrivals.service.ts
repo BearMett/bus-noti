@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Region } from '@prisma/client';
-import { BusProvider, ArrivalInfoDto } from '../../providers/bus-provider.interface';
+import {
+  BusProvider,
+  ArrivalInfoDto,
+} from '../../providers/bus-provider.interface';
 import { GyeonggiProvider } from '../../providers/gyeonggi/gyeonggi.provider';
 import { SeoulProvider } from '../../providers/seoul/seoul.provider';
 
