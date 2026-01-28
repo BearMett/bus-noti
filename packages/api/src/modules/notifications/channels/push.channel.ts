@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as webpush from 'web-push';
-import { AlertChannel, AlertMessage, NotificationTarget } from '@busnoti/shared';
+import {
+  AlertChannel,
+  AlertMessage,
+  NotificationTarget,
+} from '@busnoti/shared';
 
 @Injectable()
 export class PushChannel implements AlertChannel {

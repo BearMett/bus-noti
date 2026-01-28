@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
-import { AlertChannel, AlertMessage, NotificationTarget } from '@busnoti/shared';
+import {
+  AlertChannel,
+  AlertMessage,
+  NotificationTarget,
+} from '@busnoti/shared';
 
 @Injectable()
 export class EmailChannel implements AlertChannel {

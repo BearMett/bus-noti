@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { StopsModule } from './modules/stops/stops.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -17,6 +18,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     PrismaModule,
     ScheduleModule.forRoot(),
     HealthModule,
+    AuthModule,
     StopsModule,
     SubscriptionsModule,
     NotificationsModule,

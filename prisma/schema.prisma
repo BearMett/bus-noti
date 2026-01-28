@@ -15,6 +15,54 @@ enum Region {
   SEOUL // 서울
 }
 
+// 사용자
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?  // 소셜 전용 사용자는 null
+  name      String?
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      OAuthAccount[]
+  subscriptions Subscription[]
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+}
+
+// OAuth 계정 (Google, GitHub)
+model OAuthAccount {
+  id             String   @id @default(uuid())
+  userId         String
+  provider       String   // 'google' | 'github'
+  providerUserId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+// Refresh Token (JWT 갱신용)
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
 // 정류소
 model Stop {
   id         String   @id @default(uuid())
@@ -82,6 +130,7 @@ model Subscription {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications Notification[]
 
   @@index([userId])

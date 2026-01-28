@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AlertChannel, AlertMessage, NotificationTarget } from '@busnoti/shared';
+import {
+  AlertChannel,
+  AlertMessage,
+  NotificationTarget,
+} from '@busnoti/shared';
 
 @Injectable()
 export class ConsoleChannel implements AlertChannel {

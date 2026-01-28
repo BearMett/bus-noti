@@ -6,18 +6,20 @@ import {
   Delete,
   Body,
   Param,
-  Query,
+  UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
-import {
-  CreateSubscriptionDto,
-  UpdateSubscriptionDto,
-} from '@busnoti/shared';
+import { CreateSubscriptionDto, UpdateSubscriptionDto } from '@busnoti/shared';
+import type { AuthUser } from '@busnoti/shared';
 import { Subscription } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('subscriptions')
+@UseGuards(JwtAuthGuard)
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
@@ -25,24 +27,36 @@ export class SubscriptionsController {
    * POST /subscriptions - Create a new subscription
    */
   @Post()
-  async create(@Body() dto: CreateSubscriptionDto): Promise<Subscription> {
-    return this.subscriptionsService.create(dto);
+  async create(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: CreateSubscriptionDto,
+  ): Promise<Subscription> {
+    return this.subscriptionsService.create({ ...dto, userId: user.id });
   }
 
   /**
-   * GET /subscriptions?userId=xxx - Get user's subscriptions
+   * GET /subscriptions - Get current user's subscriptions
    */
   @Get()
-  async findByUser(@Query('userId') userId: string): Promise<Subscription[]> {
-    return this.subscriptionsService.findByUser(userId);
+  async findByUser(@CurrentUser() user: AuthUser): Promise<Subscription[]> {
+    return this.subscriptionsService.findByUser(user.id);
   }
 
   /**
    * GET /subscriptions/:id - Get subscription by ID
    */
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<Subscription> {
-    return this.subscriptionsService.findById(id);
+  async findById(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ): Promise<Subscription> {
+    const subscription = await this.subscriptionsService.findById(id);
+
+    if (subscription.userId !== user.id) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return subscription;
   }
 
   /**
@@ -50,10 +64,18 @@ export class SubscriptionsController {
    */
   @Patch(':id')
   async update(
+    @CurrentUser() user: AuthUser,
     @Param('id') id: string,
     @Body() dto: UpdateSubscriptionDto,
   ): Promise<Subscription> {
-    return this.subscriptionsService.update(id, dto);
+    const subscription = await this.subscriptionsService.findById(id);
+
+    if (subscription.userId !== user.id) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const { userId: _userId, ...updateData } = dto;
+    return this.subscriptionsService.update(id, updateData);
   }
 
   /**
@@ -61,7 +83,16 @@ export class SubscriptionsController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string): Promise<void> {
+  async delete(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+  ): Promise<void> {
+    const subscription = await this.subscriptionsService.findById(id);
+
+    if (subscription.userId !== user.id) {
+      throw new ForbiddenException('Access denied');
+    }
+
     return this.subscriptionsService.delete(id);
   }
 }
