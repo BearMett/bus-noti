@@ -1,55 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import {
-  SubscriptionCard,
-  SubscriptionData,
-} from '@/components/dashboard/SubscriptionCard';
+import { SubscriptionCard } from '@/components/dashboard/SubscriptionCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { StatusBar } from '@/components/dashboard/StatusBar';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
-
-// TODO: API 통합 후 제거 - 현재는 도착정보 API가 구독과 분리되어 있어 mock 사용
-const initialMockSubscriptions: SubscriptionData[] = [
-  {
-    id: 1,
-    routeNo: '9403',
-    stationName: '강남역',
-    arrivalMinutes: 2,
-    plateNo: '서울70사1234',
-  },
-  {
-    id: 2,
-    routeNo: '370',
-    stationName: '신논현역',
-    arrivalMinutes: 8,
-    plateNo: '서울74사5678',
-  },
-  {
-    id: 3,
-    routeNo: 'M6405',
-    stationName: '판교역',
-    arrivalMinutes: 15,
-    plateNo: '경기70아9012',
-  },
-];
+import { useDashboard } from '@/hooks/useDashboard';
+import { useDeleteSubscription } from '@/hooks/useSubscriptions';
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, isLoading, isAuthenticated, logout, isLoggingOut } = useAuth();
+  const {
+    data: dashboardData,
+    isLoading: isDashboardLoading,
+    dataUpdatedAt,
+  } = useDashboard({ enabled: isAuthenticated });
+  const deleteSubscription = useDeleteSubscription();
 
-  const [subscriptions, setSubscriptions] =
-    useState<SubscriptionData[]>(initialMockSubscriptions);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setLastUpdate(new Date());
-  }, []);
+  const subscriptions = dashboardData?.subscriptions ?? [];
+  const lastUpdate = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
   // 인증 확인 후 리다이렉트
   useEffect(() => {
@@ -57,22 +30,6 @@ export default function Dashboard() {
       router.push('/login');
     }
   }, [isLoading, isAuthenticated, router]);
-
-  // 30초마다 도착정보 갱신 시뮬레이션
-  // TODO: useStopArrivals 훅으로 교체
-  useEffect(() => {
-    if (!mounted) return;
-    const updateTimer = setInterval(() => {
-      setSubscriptions((prev) =>
-        prev.map((sub) => ({
-          ...sub,
-          arrivalMinutes: Math.max(0, sub.arrivalMinutes - 1),
-        })),
-      );
-      setLastUpdate(new Date());
-    }, 30000);
-    return () => clearInterval(updateTimer);
-  }, [mounted]);
 
   const handleLogout = async () => {
     await logout();
@@ -83,13 +40,12 @@ export default function Dashboard() {
     // TODO: 노선 추가 모달/페이지로 이동
   };
 
-  const handleDeleteSubscription = (id: number) => {
-    setSubscriptions((prev) => prev.filter((sub) => sub.id !== id));
-    // TODO: useDeleteSubscription mutation 호출
+  const handleDeleteSubscription = (id: string) => {
+    deleteSubscription.mutate(id);
   };
 
   // 로딩 중일 때
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && isDashboardLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-text-secondary">로딩 중...</div>
@@ -103,11 +59,17 @@ export default function Dashboard() {
   }
 
   const arrivingSoonCount = subscriptions.filter(
-    (sub) => sub.arrivalMinutes <= 3,
+    (sub) => sub.arrival && sub.arrival.predictTimeMin <= 3,
   ).length;
 
-  const sortedSubscriptions = [...subscriptions].sort(
-    (a, b) => a.arrivalMinutes - b.arrivalMinutes,
+  const sortedSubscriptions = useMemo(
+    () =>
+      [...subscriptions].sort((a, b) => {
+        const aMin = a.arrival?.predictTimeMin ?? Infinity;
+        const bMin = b.arrival?.predictTimeMin ?? Infinity;
+        return aMin - bMin;
+      }),
+    [subscriptions],
   );
 
   return (
@@ -136,7 +98,7 @@ export default function Dashboard() {
         </div>
 
         {/* Status Bar */}
-        {subscriptions.length > 0 && mounted && lastUpdate && (
+        {subscriptions.length > 0 && lastUpdate && (
           <div className="mb-6">
             <StatusBar
               totalSubscriptions={subscriptions.length}
@@ -195,7 +157,7 @@ export default function Dashboard() {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between text-xs text-text-muted">
             <span>BusNoti v1.0.0</span>
-            <span>{mounted && new Date().toLocaleDateString('ko-KR')}</span>
+            <span>{new Date().toLocaleDateString('ko-KR')}</span>
           </div>
         </div>
       </footer>

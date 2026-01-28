@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscriptionsApi } from '@/lib/api/subscriptions';
 import type { CreateSubscriptionDto, UpdateSubscriptionDto } from '@busnoti/shared';
+import { dashboardKeys } from './useDashboard';
 
 export const subscriptionKeys = {
   all: ['subscriptions'] as const,
@@ -32,6 +33,7 @@ export function useCreateSubscription() {
       subscriptionsApi.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 }
@@ -45,6 +47,7 @@ export function useUpdateSubscription() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 }
@@ -56,6 +59,7 @@ export function useDeleteSubscription() {
     mutationFn: (id: string) => subscriptionsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subscriptionKeys.all });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 }

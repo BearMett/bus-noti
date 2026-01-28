@@ -119,7 +119,9 @@ model Subscription {
   userId          String
   region          Region
   stationId       String   // 외부 API 정류소 ID
+  stationName     String?  // 정류소명 (표시용)
   routeId         String   // 외부 API 노선 ID
+  routeName       String?  // 노선명 (표시용)
   staOrder        Int?     // 정류소 순번
   leadTimeMinutes Int      @default(5) // n분 전 알림
   channels        String   // JSON: ["push", "email"]

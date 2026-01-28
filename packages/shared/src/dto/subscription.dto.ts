@@ -23,8 +23,16 @@ export class CreateSubscriptionDto {
   @IsString()
   stationId: string;
 
+  @IsOptional()
+  @IsString()
+  stationName?: string;
+
   @IsString()
   routeId: string;
+
+  @IsOptional()
+  @IsString()
+  routeName?: string;
 
   @IsOptional()
   @IsNumber()

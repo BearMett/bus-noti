@@ -3,18 +3,11 @@
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { CountdownDisplay } from '@/components/ui/LEDDisplay';
-
-export interface SubscriptionData {
-  id: number;
-  routeNo: string;
-  stationName: string;
-  arrivalMinutes: number;
-  plateNo: string;
-}
+import type { DashboardSubscriptionDto } from '@busnoti/shared';
 
 interface SubscriptionCardProps {
-  subscription: SubscriptionData;
-  onDelete?: (id: number) => void;
+  subscription: DashboardSubscriptionDto;
+  onDelete?: (id: string) => void;
 }
 
 function getStatusVariant(minutes: number): 'arriving' | 'soon' | 'normal' {
@@ -31,8 +24,10 @@ function getStatusText(minutes: number): string {
 }
 
 export function SubscriptionCard({ subscription, onDelete }: SubscriptionCardProps) {
-  const { id, routeNo, stationName, arrivalMinutes, plateNo } = subscription;
-  const statusVariant = getStatusVariant(arrivalMinutes);
+  const { id, routeName, stationName, arrival } = subscription;
+  const arrivalMinutes = arrival?.predictTimeMin ?? null;
+  const plateNo = arrival?.plateNo ?? '-';
+  const statusVariant = arrivalMinutes !== null ? getStatusVariant(arrivalMinutes) : 'normal';
 
   return (
     <Card
@@ -47,7 +42,7 @@ export function SubscriptionCard({ subscription, onDelete }: SubscriptionCardPro
               노선
             </span>
             <span className="text-xl font-bold text-text-inverse">
-              {routeNo}
+              {routeName}
             </span>
           </div>
 
@@ -62,9 +57,13 @@ export function SubscriptionCard({ subscription, onDelete }: SubscriptionCardPro
                   {plateNo}
                 </p>
               </div>
-              <Badge variant={statusVariant} pulse={arrivalMinutes <= 3}>
-                {getStatusText(arrivalMinutes)}
-              </Badge>
+              {arrivalMinutes !== null ? (
+                <Badge variant={statusVariant} pulse={arrivalMinutes <= 3}>
+                  {getStatusText(arrivalMinutes)}
+                </Badge>
+              ) : (
+                <Badge variant="normal">정보 없음</Badge>
+              )}
             </div>
 
             <div className="flex items-end justify-between mt-3">
@@ -84,11 +83,15 @@ export function SubscriptionCard({ subscription, onDelete }: SubscriptionCardPro
 
           {/* Countdown Section */}
           <div className="flex-shrink-0 w-24 bg-surface flex flex-col items-center justify-center p-4 border-l border-border">
-            <CountdownDisplay
-              minutes={arrivalMinutes}
-              label="분"
-              size="lg"
-            />
+            {arrivalMinutes !== null ? (
+              <CountdownDisplay
+                minutes={arrivalMinutes}
+                label="분"
+                size="lg"
+              />
+            ) : (
+              <span className="text-text-muted text-sm">-</span>
+            )}
           </div>
         </div>
       </CardContent>

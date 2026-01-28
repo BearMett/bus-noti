@@ -3,6 +3,7 @@ import type {
   CreateSubscriptionDto,
   UpdateSubscriptionDto,
   Subscription,
+  DashboardResponseDto,
 } from '@busnoti/shared';
 
 export const subscriptionsApi = {
@@ -17,4 +18,6 @@ export const subscriptionsApi = {
     api.patch<Subscription>(`/subscriptions/${id}`, dto),
 
   delete: (id: string) => api.delete(`/subscriptions/${id}`),
+
+  getDashboard: () => api.get<DashboardResponseDto>('/subscriptions/dashboard'),
 };

@@ -1,13 +1,23 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Subscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateSubscriptionDto, UpdateSubscriptionDto } from '@busnoti/shared';
+import {
+  CreateSubscriptionDto,
+  UpdateSubscriptionDto,
+  DashboardResponseDto,
+  DashboardSubscriptionDto,
+  ArrivalInfoDto,
+} from '@busnoti/shared';
+import { StopsService } from '../stops/stops.service';
 
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly stopsService: StopsService,
+  ) {}
 
   /**
    * Create a new subscription
@@ -20,7 +30,9 @@ export class SubscriptionsService {
         userId: dto.userId,
         region: dto.region,
         stationId: dto.stationId,
+        stationName: dto.stationName,
         routeId: dto.routeId,
+        routeName: dto.routeName,
         staOrder: dto.staOrder,
         leadTimeMinutes: dto.leadTimeMinutes,
         channels: JSON.stringify(dto.channels),
@@ -175,5 +187,85 @@ export class SubscriptionsService {
     }
 
     return true;
+  }
+
+  /**
+   * Get dashboard data for a user (subscriptions with arrival info)
+   */
+  async getDashboard(userId: string): Promise<DashboardResponseDto> {
+    this.logger.debug(`Getting dashboard for user: ${userId}`);
+
+    const subscriptions = await this.findByUser(userId);
+
+    if (subscriptions.length === 0) {
+      return {
+        subscriptions: [],
+        lastUpdated: new Date().toISOString(),
+      };
+    }
+
+    // Get unique station-region pairs
+    const stationKeys = new Map<string, { stationId: string; region: string }>();
+    for (const sub of subscriptions) {
+      const key = `${sub.region}:${sub.stationId}`;
+      if (!stationKeys.has(key)) {
+        stationKeys.set(key, { stationId: sub.stationId, region: sub.region });
+      }
+    }
+
+    // Fetch arrival info for each station in parallel
+    const arrivalsByStation = new Map<string, ArrivalInfoDto[]>();
+    const arrivalPromises = Array.from(stationKeys.entries()).map(
+      async ([key, { stationId, region }]) => {
+        try {
+          const arrivals = await this.stopsService.getArrivalInfo(
+            stationId,
+            region as any,
+          );
+          arrivalsByStation.set(key, arrivals);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to get arrivals for station ${stationId}: ${error}`,
+          );
+          arrivalsByStation.set(key, []);
+        }
+      },
+    );
+
+    await Promise.all(arrivalPromises);
+
+    // Map subscriptions to dashboard DTOs
+    const dashboardSubscriptions: DashboardSubscriptionDto[] = subscriptions.map(
+      (sub) => {
+        const stationKey = `${sub.region}:${sub.stationId}`;
+        const arrivals = arrivalsByStation.get(stationKey) ?? [];
+
+        // Find arrival for this route
+        const routeArrival = arrivals.find((a) => a.routeId === sub.routeId);
+
+        return {
+          id: sub.id,
+          region: sub.region,
+          stationId: sub.stationId,
+          stationName: sub.stationName ?? sub.stationId,
+          routeId: sub.routeId,
+          routeName: sub.routeName ?? routeArrival?.routeName ?? sub.routeId,
+          leadTimeMinutes: sub.leadTimeMinutes,
+          isActive: sub.isActive,
+          arrival: routeArrival
+            ? {
+                predictTimeMin: routeArrival.predictTimeMin,
+                plateNo: routeArrival.plateNo,
+                remainStops: routeArrival.remainStops,
+              }
+            : null,
+        };
+      },
+    );
+
+    return {
+      subscriptions: dashboardSubscriptions,
+      lastUpdated: new Date().toISOString(),
+    };
   }
 }

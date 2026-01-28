@@ -12,7 +12,11 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
-import { CreateSubscriptionDto, UpdateSubscriptionDto } from '@busnoti/shared';
+import {
+  CreateSubscriptionDto,
+  UpdateSubscriptionDto,
+  DashboardResponseDto,
+} from '@busnoti/shared';
 import type { AuthUser } from '@busnoti/shared';
 import { Subscription } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -32,6 +36,16 @@ export class SubscriptionsController {
     @Body() dto: CreateSubscriptionDto,
   ): Promise<Subscription> {
     return this.subscriptionsService.create({ ...dto, userId: user.id });
+  }
+
+  /**
+   * GET /subscriptions/dashboard - Get dashboard data with arrival info
+   */
+  @Get('dashboard')
+  async getDashboard(
+    @CurrentUser() user: AuthUser,
+  ): Promise<DashboardResponseDto> {
+    return this.subscriptionsService.getDashboard(user.id);
   }
 
   /**

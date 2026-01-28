@@ -8,3 +8,4 @@ export * from './types/auth';
 export * from './dto/subscription.dto';
 export * from './dto/stop.dto';
 export * from './dto/auth.dto';
+export * from './dto/dashboard.dto';
