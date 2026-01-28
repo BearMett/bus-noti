@@ -2,36 +2,30 @@
 
 import { HTMLAttributes, forwardRef } from 'react';
 
-interface LEDDisplayProps extends HTMLAttributes<HTMLDivElement> {
-  value: string | number;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  color?: 'yellow' | 'red' | 'green' | 'blue';
-  glow?: boolean;
-  blink?: boolean;
+interface CountdownDisplayProps extends HTMLAttributes<HTMLDivElement> {
+  minutes: number;
+  label?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const sizeStyles = {
-  sm: 'text-xl',
-  md: 'text-3xl',
+  sm: 'text-2xl',
+  md: 'text-4xl',
   lg: 'text-5xl',
-  xl: 'text-7xl',
 };
 
-const colorStyles = {
-  yellow: 'text-transit-yellow',
-  red: 'text-transit-red',
-  green: 'text-transit-green',
-  blue: 'text-transit-blue',
-};
+function getStatusColor(minutes: number): string {
+  if (minutes <= 3) return 'text-status-arriving-text';
+  if (minutes <= 7) return 'text-status-soon-text';
+  return 'text-status-normal-text';
+}
 
-export const LEDDisplay = forwardRef<HTMLDivElement, LEDDisplayProps>(
+export const CountdownDisplay = forwardRef<HTMLDivElement, CountdownDisplayProps>(
   (
     {
-      value,
+      minutes,
+      label,
       size = 'md',
-      color = 'yellow',
-      glow = true,
-      blink = false,
       className = '',
       ...props
     },
@@ -40,56 +34,21 @@ export const LEDDisplay = forwardRef<HTMLDivElement, LEDDisplayProps>(
     return (
       <div
         ref={ref}
-        className={`
-          font-[family-name:var(--font-led)]
-          font-bold
-          tabular-nums
-          ${sizeStyles[size]}
-          ${colorStyles[color]}
-          ${glow ? 'led-glow' : ''}
-          ${blink ? 'animate-blink' : ''}
-          ${className}
-        `}
-        {...props}
-      >
-        {value}
-      </div>
-    );
-  }
-);
-
-LEDDisplay.displayName = 'LEDDisplay';
-
-interface LEDCountdownProps extends HTMLAttributes<HTMLDivElement> {
-  minutes: number;
-  label?: string;
-  size?: 'sm' | 'md' | 'lg';
-}
-
-export const LEDCountdown = forwardRef<HTMLDivElement, LEDCountdownProps>(
-  ({ minutes, label, size = 'md', className = '', ...props }, ref) => {
-    const getColor = () => {
-      if (minutes <= 3) return 'red';
-      if (minutes <= 7) return 'yellow';
-      return 'green';
-    };
-
-    const getBlink = () => minutes <= 2;
-
-    return (
-      <div
-        ref={ref}
         className={`flex flex-col items-center ${className}`}
         {...props}
       >
-        <LEDDisplay
-          value={minutes}
-          size={size}
-          color={getColor()}
-          blink={getBlink()}
-        />
+        <span
+          className={`
+            font-mono font-bold tabular-nums
+            ${sizeStyles[size]}
+            ${getStatusColor(minutes)}
+            ${minutes <= 2 ? 'animate-pulse-subtle' : ''}
+          `}
+        >
+          {minutes}
+        </span>
         {label && (
-          <span className="text-xs font-bold uppercase tracking-wider text-transit-gray-light mt-1">
+          <span className="text-xs font-medium text-text-muted mt-1">
             {label}
           </span>
         )}
@@ -98,4 +57,8 @@ export const LEDCountdown = forwardRef<HTMLDivElement, LEDCountdownProps>(
   }
 );
 
-LEDCountdown.displayName = 'LEDCountdown';
+CountdownDisplay.displayName = 'CountdownDisplay';
+
+// Legacy exports for backward compatibility
+export const LEDDisplay = CountdownDisplay;
+export const LEDCountdown = CountdownDisplay;
