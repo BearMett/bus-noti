@@ -3,23 +3,18 @@
 import { HTMLAttributes, forwardRef } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'bordered';
-  withScanlines?: boolean;
-  withNoise?: boolean;
+  variant?: 'default' | 'elevated';
 }
 
 const variantStyles = {
   default: 'bg-surface border border-border',
-  elevated: 'bg-surface-elevated border border-border shadow-[0_4px_24px_rgba(0,0,0,0.5)]',
-  bordered: 'bg-surface border-2 border-transit-yellow',
+  elevated: 'bg-surface-elevated border border-border shadow-md',
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   (
     {
       variant = 'default',
-      withScanlines = false,
-      withNoise = false,
       className = '',
       children,
       ...props
@@ -30,10 +25,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={`
-          relative overflow-hidden
+          rounded-xl overflow-hidden
           ${variantStyles[variant]}
-          ${withScanlines ? 'scanline-overlay' : ''}
-          ${withNoise ? 'noise-bg' : ''}
           ${className}
         `}
         {...props}
@@ -69,12 +62,12 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
           <>
             <div>
               {title && (
-                <h3 className="text-lg font-bold uppercase tracking-wider text-transit-yellow">
+                <h3 className="text-base font-semibold text-text-primary">
                   {title}
                 </h3>
               )}
               {subtitle && (
-                <p className="text-sm text-transit-gray-light mt-0.5">
+                <p className="text-sm text-text-secondary mt-0.5">
                   {subtitle}
                 </p>
               )}

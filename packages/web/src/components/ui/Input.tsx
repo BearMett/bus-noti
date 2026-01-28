@@ -13,11 +13,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-bold uppercase tracking-wider text-transit-yellow"
+            className="block text-sm font-medium text-text-primary"
           >
             {label}
           </label>
@@ -28,19 +28,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             className={`
               w-full
-              bg-transit-dark
-              border-2 border-transit-gray
-              text-transit-yellow
-              px-4 py-3
-              font-[family-name:var(--font-led)]
-              text-base
-              placeholder:text-transit-gray-light
+              bg-background
+              border border-border
+              text-text-primary
+              px-3 py-2.5
+              rounded-lg
+              text-sm
+              placeholder:text-text-muted
               transition-all duration-150
               focus:outline-none
-              focus:border-transit-yellow
-              focus:shadow-[0_0_0_1px_var(--transit-yellow),0_0_12px_rgba(255,209,0,0.3)]
-              disabled:opacity-50 disabled:cursor-not-allowed
-              ${error ? 'border-transit-red focus:border-transit-red focus:shadow-[0_0_0_1px_var(--transit-red),0_0_12px_rgba(255,51,51,0.3)]' : ''}
+              focus:border-primary
+              focus:ring-2 focus:ring-primary/20
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-surface
+              ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
               ${className}
             `}
             {...props}
@@ -48,7 +48,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {error && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <svg
-                className="w-5 h-5 text-transit-red"
+                className="w-5 h-5 text-red-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -64,13 +64,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="text-sm text-transit-red font-medium flex items-center gap-1">
-            <span className="animate-blink">▶</span>
-            {error}
-          </p>
+          <p className="text-sm text-red-500">{error}</p>
         )}
         {hint && !error && (
-          <p className="text-sm text-transit-gray-light">{hint}</p>
+          <p className="text-sm text-text-muted">{hint}</p>
         )}
       </div>
     );

@@ -1,7 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/Badge';
-
 interface StatusBarProps {
   totalSubscriptions: number;
   arrivingSoon: number;
@@ -9,43 +7,35 @@ interface StatusBarProps {
 }
 
 export function StatusBar({ totalSubscriptions, arrivingSoon, lastUpdate }: StatusBarProps) {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  };
+
   return (
-    <div className="flex items-center justify-between py-3 px-4 bg-transit-dark border border-border">
-      <div className="flex items-center gap-6">
-        {/* Active Subscriptions */}
+    <div className="flex items-center justify-between p-3 bg-surface rounded-lg border border-border">
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-transit-gray-light">
-            Active Routes:
-          </span>
-          <span className="font-[family-name:var(--font-led)] text-transit-yellow">
-            {totalSubscriptions}
-          </span>
+          <span className="text-sm text-text-secondary">구독 노선</span>
+          <span className="text-sm font-semibold text-text-primary">{totalSubscriptions}개</span>
         </div>
 
-        {/* Arriving Soon Alert */}
         {arrivingSoon > 0 && (
           <div className="flex items-center gap-2">
-            <Badge variant="arriving" pulse glow>
-              {arrivingSoon} ARRIVING SOON
-            </Badge>
+            <span className="w-2 h-2 bg-status-arriving-text rounded-full animate-pulse-subtle" />
+            <span className="text-sm text-status-arriving-text font-medium">
+              {arrivingSoon}개 곧 도착
+            </span>
           </div>
         )}
       </div>
 
-      {/* Last Update Time */}
-      <div className="flex items-center gap-2">
-        <span className="w-2 h-2 bg-transit-green rounded-full animate-pulse" />
-        <span className="text-xs font-bold uppercase tracking-wider text-transit-gray-light">
-          Last Update:
-        </span>
-        <time className="text-xs font-mono text-transit-green">
-          {lastUpdate.toLocaleTimeString('ko-KR', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-          })}
-        </time>
+      <div className="text-xs text-text-muted">
+        마지막 업데이트: <time className="font-mono">{formatTime(lastUpdate)}</time>
       </div>
     </div>
   );

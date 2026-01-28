@@ -2,7 +2,7 @@
 
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 
-type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -14,19 +14,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-transit-yellow text-transit-black hover:bg-[#FFE033] hover:shadow-[0_4px_12px_rgba(255,209,0,0.4)]',
-  outline:
-    'bg-transparent text-transit-yellow border-2 border-transit-yellow hover:bg-transit-yellow hover:text-transit-black',
+    'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm',
+  secondary:
+    'bg-surface border border-border text-text-primary hover:bg-background',
   ghost:
-    'bg-transparent text-transit-yellow hover:bg-transit-gray/30',
+    'bg-transparent text-primary hover:bg-primary-light',
   danger:
-    'bg-transit-red text-white hover:bg-transit-red-dim',
+    'bg-red-500 text-white hover:bg-red-600 shadow-sm',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-5 py-2.5 text-base',
-  lg: 'px-6 py-3 text-lg',
+  sm: 'px-3 py-1.5 text-sm rounded-md',
+  md: 'px-4 py-2 text-sm rounded-lg',
+  lg: 'px-6 py-3 text-base rounded-lg',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -50,15 +50,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={isDisabled}
         className={`
-          font-bold uppercase tracking-wider
+          font-medium
           transition-all duration-150
-          relative overflow-hidden
-          focus:outline-none focus:ring-2 focus:ring-transit-yellow focus:ring-offset-2 focus:ring-offset-transit-black
-          disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
+          focus-ring
+          disabled:opacity-50 disabled:cursor-not-allowed
           ${variantStyles[variant]}
           ${sizeStyles[size]}
           ${fullWidth ? 'w-full' : ''}
-          ${!isDisabled ? 'hover:-translate-y-0.5 active:translate-y-0' : ''}
           ${className}
         `}
         {...props}
@@ -85,7 +83,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span>Processing...</span>
+            <span>처리 중...</span>
           </span>
         ) : (
           children

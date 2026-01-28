@@ -4,21 +4,11 @@ import { HTMLAttributes, forwardRef } from 'react';
 
 interface DividerProps extends HTMLAttributes<HTMLDivElement> {
   label?: string;
-  variant?: 'solid' | 'dashed' | 'warning';
+  variant?: 'solid' | 'dashed';
 }
 
 export const Divider = forwardRef<HTMLDivElement, DividerProps>(
   ({ label, variant = 'solid', className = '', ...props }, ref) => {
-    if (variant === 'warning') {
-      return (
-        <div
-          ref={ref}
-          className={`h-2 warning-stripes ${className}`}
-          {...props}
-        />
-      );
-    }
-
     if (label) {
       return (
         <div
@@ -29,15 +19,15 @@ export const Divider = forwardRef<HTMLDivElement, DividerProps>(
           <div
             className={`flex-1 border-t ${
               variant === 'dashed' ? 'border-dashed' : ''
-            } border-transit-gray`}
+            } border-border`}
           />
-          <span className="px-4 text-xs font-bold uppercase tracking-[0.2em] text-transit-gray-light bg-transit-black">
+          <span className="px-3 text-xs font-medium text-text-muted bg-background">
             {label}
           </span>
           <div
             className={`flex-1 border-t ${
               variant === 'dashed' ? 'border-dashed' : ''
-            } border-transit-gray`}
+            } border-border`}
           />
         </div>
       );
@@ -49,7 +39,7 @@ export const Divider = forwardRef<HTMLDivElement, DividerProps>(
         className={`
           border-t
           ${variant === 'dashed' ? 'border-dashed' : ''}
-          border-transit-gray
+          border-border
           ${className}
         `}
         {...props}

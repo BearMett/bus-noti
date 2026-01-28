@@ -7,15 +7,14 @@ type BadgeVariant = 'default' | 'arriving' | 'soon' | 'normal' | 'info';
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
   pulse?: boolean;
-  glow?: boolean;
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-transit-gray text-transit-yellow',
-  arriving: 'bg-transit-red text-white',
-  soon: 'bg-transit-yellow text-transit-black',
-  normal: 'bg-transit-green text-transit-black',
-  info: 'bg-transit-blue text-white',
+  default: 'bg-surface border border-border text-text-primary',
+  arriving: 'bg-status-arriving-bg text-status-arriving-text',
+  soon: 'bg-status-soon-bg text-status-soon-text',
+  normal: 'bg-status-normal-bg text-status-normal-text',
+  info: 'bg-primary-light text-primary',
 };
 
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
@@ -23,7 +22,6 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
     {
       variant = 'default',
       pulse = false,
-      glow = false,
       className = '',
       children,
       ...props
@@ -36,10 +34,10 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
         className={`
           inline-flex items-center
           px-2.5 py-1
-          text-xs font-bold uppercase tracking-wider
+          text-xs font-medium
+          rounded-full
           ${variantStyles[variant]}
-          ${pulse ? 'animate-pulse' : ''}
-          ${glow && variant === 'arriving' ? 'animate-glow' : ''}
+          ${pulse ? 'animate-pulse-subtle' : ''}
           ${className}
         `}
         {...props}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
-import { Divider } from '@/components/ui/Divider';
+import { ThemeSelector } from '@/components/ui/ThemeSelector';
 
 interface DashboardHeaderProps {
   userName: string;
@@ -11,7 +11,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ userName, onLogout }: DashboardHeaderProps) {
-  const [currentTime, setCurrentTime] = useState<string>('--:--');
+  const [currentTime, setCurrentTime] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -31,49 +31,37 @@ export function DashboardHeader({ userName, onLogout }: DashboardHeaderProps) {
   }, []);
 
   return (
-    <header className="w-full">
-      <div className="flex items-center justify-between py-4">
+    <header className="w-full border-b border-border bg-surface">
+      <div className="flex items-center justify-between py-3 px-4">
         {/* Logo */}
-        <Logo size="md" animated />
+        <Logo size="md" />
 
-        {/* User Info & Actions */}
-        <div className="flex items-center gap-6">
-          {/* Current Time Display */}
-          <div className="hidden sm:flex flex-col items-end">
-            <span className="text-xs font-bold uppercase tracking-wider text-transit-gray-light">
-              SYSTEM TIME
-            </span>
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          {/* Current Time */}
+          <div className="hidden sm:block">
             <time
-              className="font-[family-name:var(--font-led)] text-lg text-transit-green led-glow"
+              className="font-mono text-sm text-text-secondary tabular-nums"
               suppressHydrationWarning
             >
               {mounted ? currentTime : '--:--'}
             </time>
           </div>
 
-          {/* Vertical Divider */}
-          <div className="hidden sm:block w-px h-10 bg-transit-gray" />
+          {/* Theme Selector */}
+          <ThemeSelector />
 
-          {/* User Info */}
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-bold uppercase tracking-wider text-transit-gray-light">
-                OPERATOR
-              </span>
-              <span className="text-sm font-bold text-transit-yellow">
-                {userName}
-              </span>
-            </div>
-
-            <Button variant="outline" size="sm" onClick={onLogout}>
-              Logout
+          {/* User Menu */}
+          <div className="flex items-center gap-3 pl-3 border-l border-border">
+            <span className="text-sm text-text-secondary hidden sm:block">
+              {userName}
+            </span>
+            <Button variant="ghost" size="sm" onClick={onLogout}>
+              로그아웃
             </Button>
           </div>
         </div>
       </div>
-
-      {/* Warning Stripe Divider */}
-      <Divider variant="warning" />
     </header>
   );
 }
