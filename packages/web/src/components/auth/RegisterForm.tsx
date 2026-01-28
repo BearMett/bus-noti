@@ -1,19 +1,147 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+
+// Password strength calculation
+function calculatePasswordStrength(password: string): {
+  score: number;
+  label: string;
+  color: string;
+} {
+  let score = 0;
+
+  if (password.length === 0) {
+    return { score: 0, label: 'EMPTY', color: 'transit-gray' };
+  }
+
+  // Length checks
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (password.length >= 16) score += 1;
+
+  // Character type checks
+  if (/[a-z]/.test(password)) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+
+  // Normalize to 0-4 scale
+  const normalizedScore = Math.min(4, Math.floor(score / 1.75));
+
+  const strengthMap: Record<number, { label: string; color: string }> = {
+    0: { label: 'WEAK', color: 'transit-red' },
+    1: { label: 'FAIR', color: 'transit-red' },
+    2: { label: 'GOOD', color: 'transit-yellow' },
+    3: { label: 'STRONG', color: 'transit-green' },
+    4: { label: 'SECURE', color: 'transit-green' },
+  };
+
+  return {
+    score: normalizedScore,
+    ...strengthMap[normalizedScore],
+  };
+}
+
+// LED Password Strength Indicator
+function PasswordStrengthIndicator({ password }: { password: string }) {
+  const strength = useMemo(() => calculatePasswordStrength(password), [password]);
+
+  return (
+    <div className="mt-3 space-y-2">
+      {/* LED Bar */}
+      <div className="flex items-center gap-1">
+        {[0, 1, 2, 3, 4].map((index) => {
+          const isActive = index <= strength.score && password.length > 0;
+          let ledColor = 'bg-transit-gray';
+
+          if (isActive) {
+            if (index <= 1) ledColor = 'bg-transit-red';
+            else if (index <= 2) ledColor = 'bg-transit-yellow';
+            else ledColor = 'bg-transit-green';
+          }
+
+          return (
+            <div
+              key={index}
+              className={`
+                h-2 flex-1 transition-all duration-300
+                ${ledColor}
+                ${isActive ? `shadow-[0_0_8px_var(--${ledColor.replace('bg-', '')})]` : 'opacity-30'}
+              `}
+              style={{
+                boxShadow: isActive
+                  ? index <= 1
+                    ? '0 0 8px var(--transit-red)'
+                    : index <= 2
+                      ? '0 0 8px var(--transit-yellow)'
+                      : '0 0 8px var(--transit-green)'
+                  : 'none',
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Status Text */}
+      {password.length > 0 && (
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-mono tracking-wider text-transit-gray-light uppercase">
+            Password Strength
+          </span>
+          <span
+            className={`text-xs font-bold tracking-wider text-${strength.color}`}
+            style={{
+              color:
+                strength.color === 'transit-red'
+                  ? 'var(--transit-red)'
+                  : strength.color === 'transit-yellow'
+                    ? 'var(--transit-yellow)'
+                    : strength.color === 'transit-green'
+                      ? 'var(--transit-green)'
+                      : 'var(--transit-gray)',
+              textShadow:
+                strength.score >= 3
+                  ? '0 0 8px var(--transit-green)'
+                  : undefined,
+            }}
+          >
+            [{strength.label}]
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
 
+  const passwordMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -27,114 +155,132 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-2">
-        <label
-          htmlFor="name"
-          className="block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400"
-        >
-          Name <span className="text-zinc-400 dark:text-zinc-600 font-normal">(optional)</span>
-        </label>
-        <input
-          id="name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-          placeholder="Your name"
-          className="w-full bg-zinc-100 dark:bg-zinc-800/50 border-2 border-transparent
-                     focus:border-amber-400 dark:focus:border-amber-500
-                     rounded-none px-4 py-3.5 text-zinc-900 dark:text-white
-                     placeholder:text-zinc-400 dark:placeholder:text-zinc-600
-                     outline-none transition-all duration-200
-                     font-mono text-sm tracking-wide"
-        />
-      </div>
+      {/* Name Field */}
+      <Input
+        id="name"
+        type="text"
+        label={
+          <>
+            Name{' '}
+            <span className="text-transit-gray-light font-normal text-[10px]">
+              (Optional)
+            </span>
+          </>
+        }
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        autoComplete="name"
+        placeholder="Your display name"
+        hint="This will be shown on your profile"
+      />
 
-      <div className="space-y-2">
-        <label
-          htmlFor="email"
-          className="block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400"
-        >
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoComplete="email"
-          placeholder="you@example.com"
-          className="w-full bg-zinc-100 dark:bg-zinc-800/50 border-2 border-transparent
-                     focus:border-amber-400 dark:focus:border-amber-500
-                     rounded-none px-4 py-3.5 text-zinc-900 dark:text-white
-                     placeholder:text-zinc-400 dark:placeholder:text-zinc-600
-                     outline-none transition-all duration-200
-                     font-mono text-sm tracking-wide"
-        />
-      </div>
+      {/* Email Field */}
+      <Input
+        id="email"
+        type="email"
+        label="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        autoComplete="email"
+        placeholder="user@example.com"
+      />
 
-      <div className="space-y-2">
-        <label
-          htmlFor="password"
-          className="block text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400"
-        >
-          Password
-        </label>
-        <input
+      {/* Password Field */}
+      <div>
+        <Input
           id="password"
           type="password"
+          label="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="new-password"
           placeholder="Min. 8 characters"
           minLength={8}
-          className="w-full bg-zinc-100 dark:bg-zinc-800/50 border-2 border-transparent
-                     focus:border-amber-400 dark:focus:border-amber-500
-                     rounded-none px-4 py-3.5 text-zinc-900 dark:text-white
-                     placeholder:text-zinc-400 dark:placeholder:text-zinc-600
-                     outline-none transition-all duration-200
-                     font-mono text-sm tracking-wide"
         />
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-          Must be at least 8 characters
-        </p>
+        <PasswordStrengthIndicator password={password} />
       </div>
 
+      {/* Confirm Password Field */}
+      <Input
+        id="confirmPassword"
+        type="password"
+        label="Confirm Password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        required
+        autoComplete="new-password"
+        placeholder="Re-enter your password"
+        error={passwordMismatch ? 'Passwords do not match' : undefined}
+      />
+
+      {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-2 text-red-500 dark:text-red-400 text-sm font-medium bg-red-50 dark:bg-red-950/30 px-4 py-3 border-l-4 border-red-500">
-          <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        <div className="flex items-center gap-3 text-transit-red text-sm font-medium bg-transit-red/10 px-4 py-3 border-l-4 border-transit-red">
+          <svg
+            className="w-5 h-5 flex-shrink-0 animate-blink"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
-          <span>{error}</span>
+          <span className="font-mono tracking-wide">{error}</span>
         </div>
       )}
 
-      <button
+      {/* Submit Button */}
+      <Button
         type="submit"
-        disabled={isLoading}
-        className="w-full bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 dark:hover:bg-amber-400
-                   text-zinc-900 font-bold uppercase tracking-[0.15em] text-sm
-                   px-6 py-4 transition-all duration-200
-                   disabled:opacity-50 disabled:cursor-not-allowed
-                   relative overflow-hidden group"
+        fullWidth
+        size="lg"
+        loading={isLoading}
+        disabled={isLoading || passwordMismatch}
+        className="group"
       >
-        <span className={`inline-flex items-center gap-2 transition-transform duration-200 ${isLoading ? 'translate-y-8' : ''}`}>
-          Create Account
-          <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </span>
-        {isLoading && (
-          <span className="absolute inset-0 flex items-center justify-center">
-            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        {!isLoading && (
+          <span className="inline-flex items-center gap-2">
+            Create Account
+            <svg
+              className="w-4 h-4 transition-transform group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
+              />
             </svg>
           </span>
         )}
-      </button>
+      </Button>
+
+      {/* Terms Notice */}
+      <p className="text-[10px] text-transit-gray-light text-center leading-relaxed">
+        By creating an account, you agree to our{' '}
+        <a
+          href="/terms"
+          className="text-transit-yellow hover:underline underline-offset-2"
+        >
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a
+          href="/privacy"
+          className="text-transit-yellow hover:underline underline-offset-2"
+        >
+          Privacy Policy
+        </a>
+      </p>
     </form>
   );
 }
