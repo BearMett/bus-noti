@@ -60,3 +60,6 @@ temp/
 
 # Vercel
 .vercel/
+
+# Git worktrees
+.worktrees/
