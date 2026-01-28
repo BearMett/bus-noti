@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { GyeonggiProvider } from '../../providers/gyeonggi/gyeonggi.provider';
-import { SeoulProvider } from '../../providers/seoul/seoul.provider';
+import { BusInfoModule } from '../../providers/busInfoProvider/bus-info.module';
 import { StopsService } from './stops.service';
 import { StopsController } from './stops.controller';
 
 @Module({
+  imports: [BusInfoModule],
   controllers: [StopsController],
-  providers: [GyeonggiProvider, SeoulProvider, StopsService],
-  exports: [GyeonggiProvider, SeoulProvider, StopsService],
+  providers: [StopsService],
+  exports: [StopsService],
 })
 export class StopsModule {}

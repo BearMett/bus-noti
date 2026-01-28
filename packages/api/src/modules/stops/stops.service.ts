@@ -1,45 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  BusProvider,
-  StationDto,
-  RouteDto,
-  ArrivalInfoDto,
-  Region,
-} from '@busnoti/shared';
-import { GyeonggiProvider } from '../../providers/gyeonggi/gyeonggi.provider';
-import { SeoulProvider } from '../../providers/seoul/seoul.provider';
+import { Injectable } from '@nestjs/common';
+import { StationDto, RouteDto, ArrivalInfoDto, Region } from '@busnoti/shared';
+import { BusInfoProvider } from '../../providers/busInfoProvider/bus-info.provider';
 
 @Injectable()
 export class StopsService {
-  private readonly logger = new Logger(StopsService.name);
-  private readonly providers: Map<Region, BusProvider>;
-
-  constructor(
-    private readonly gyeonggiProvider: GyeonggiProvider,
-    private readonly seoulProvider: SeoulProvider,
-  ) {
-    this.providers = new Map<Region, BusProvider>([
-      [Region.GG, this.gyeonggiProvider],
-      [Region.SEOUL, this.seoulProvider],
-    ]);
-  }
-
-  private getProvider(region?: Region): BusProvider {
-    if (region && this.providers.has(region)) {
-      return this.providers.get(region)!;
-    }
-    return this.gyeonggiProvider;
-  }
+  constructor(private readonly busInfoProvider: BusInfoProvider) {}
 
   async searchByKeyword(
     keyword: string,
     region?: Region,
   ): Promise<StationDto[]> {
-    const provider = this.getProvider(region);
-    this.logger.debug(
-      `Searching stations by keyword: ${keyword} in region: ${provider.region}`,
-    );
-    return provider.searchStations(keyword);
+    return this.busInfoProvider.searchStations(keyword, region ?? Region.GG);
   }
 
   async searchByLocation(
@@ -47,32 +18,27 @@ export class StopsService {
     lng: number,
     region?: Region,
   ): Promise<StationDto[]> {
-    const provider = this.getProvider(region);
-    this.logger.debug(
-      `Searching stations around (${lat}, ${lng}) in region: ${provider.region}`,
+    return this.busInfoProvider.getStationsAround(
+      lat,
+      lng,
+      region ?? Region.GG,
     );
-    return provider.getStationsAround(lat, lng);
   }
 
   async getRoutesByStation(
     stationId: string,
     region?: Region,
   ): Promise<RouteDto[]> {
-    const provider = this.getProvider(region);
-    this.logger.debug(
-      `Getting routes for station: ${stationId} in region: ${provider.region}`,
+    return this.busInfoProvider.getRoutesByStation(
+      stationId,
+      region ?? Region.GG,
     );
-    return provider.getRoutesByStation(stationId);
   }
 
   async getArrivalInfo(
     stationId: string,
     region?: Region,
   ): Promise<ArrivalInfoDto[]> {
-    const provider = this.getProvider(region);
-    this.logger.debug(
-      `Getting arrival info for station: ${stationId} in region: ${provider.region}`,
-    );
-    return provider.getArrivalInfo(stationId);
+    return this.busInfoProvider.getArrivalInfo(stationId, region ?? Region.GG);
   }
 }

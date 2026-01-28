@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
-import { ArrivalsService } from '../arrivals/arrivals.service';
+import { BusInfoProvider } from '../../providers/busInfoProvider/bus-info.provider';
 import { NotificationsService } from './notifications.service';
 import { AlertMessage, NotificationTarget } from '@busnoti/shared';
 
@@ -11,7 +11,7 @@ export class NotificationScheduler {
 
   constructor(
     private readonly subscriptionsService: SubscriptionsService,
-    private readonly arrivalsService: ArrivalsService,
+    private readonly busInfoProvider: BusInfoProvider,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -35,7 +35,7 @@ export class NotificationScheduler {
           }
 
           // Get arrivals for the subscribed route at the station
-          const arrivals = await this.arrivalsService.getArrivalsByRoute(
+          const arrivals = await this.busInfoProvider.getArrivalsByRoute(
             subscription.stationId,
             subscription.routeId,
             subscription.region,

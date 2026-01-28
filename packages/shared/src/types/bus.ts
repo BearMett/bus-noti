@@ -41,5 +41,3 @@ export interface BusProvider {
   // 도착정보 조회 (알림 트리거용)
   getArrivalInfo(stationId: string): Promise<ArrivalInfoDto[]>;
 }
-
-export const BUS_PROVIDER = Symbol('BUS_PROVIDER');

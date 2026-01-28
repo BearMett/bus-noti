@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationScheduler } from './notification.scheduler';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
-import { ArrivalsService } from '../arrivals/arrivals.service';
+import { BusInfoProvider } from '../../providers/busInfoProvider/bus-info.provider';
 import { NotificationsService } from './notifications.service';
 import { Subscription } from '@prisma/client';
 import { ArrivalInfoDto, Region } from '@busnoti/shared';
@@ -9,7 +9,7 @@ import { ArrivalInfoDto, Region } from '@busnoti/shared';
 describe('NotificationScheduler', () => {
   let scheduler: NotificationScheduler;
   let subscriptionsService: jest.Mocked<SubscriptionsService>;
-  let arrivalsService: jest.Mocked<ArrivalsService>;
+  let busInfoProvider: jest.Mocked<BusInfoProvider>;
   let notificationsService: jest.Mocked<NotificationsService>;
 
   const createMockSubscription = (
@@ -50,7 +50,7 @@ describe('NotificationScheduler', () => {
       isWithinActiveTime: jest.fn(),
     };
 
-    const mockArrivalsService = {
+    const mockBusInfoProvider = {
       getArrivalsByRoute: jest.fn(),
     };
 
@@ -64,14 +64,14 @@ describe('NotificationScheduler', () => {
       providers: [
         NotificationScheduler,
         { provide: SubscriptionsService, useValue: mockSubscriptionsService },
-        { provide: ArrivalsService, useValue: mockArrivalsService },
+        { provide: BusInfoProvider, useValue: mockBusInfoProvider },
         { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
     scheduler = module.get<NotificationScheduler>(NotificationScheduler);
     subscriptionsService = module.get(SubscriptionsService);
-    arrivalsService = module.get(ArrivalsService);
+    busInfoProvider = module.get(BusInfoProvider);
     notificationsService = module.get(NotificationsService);
   });
 
@@ -89,18 +89,18 @@ describe('NotificationScheduler', () => {
           subscription,
         );
         // Should NOT call arrivals API when outside time window
-        expect(arrivalsService.getArrivalsByRoute).not.toHaveBeenCalled();
+        expect(busInfoProvider.getArrivalsByRoute).not.toHaveBeenCalled();
       });
 
       it('should process subscriptions within active time window', async () => {
         const subscription = createMockSubscription();
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([]);
 
         await scheduler.checkArrivalNotifications();
 
-        expect(arrivalsService.getArrivalsByRoute).toHaveBeenCalledWith(
+        expect(busInfoProvider.getArrivalsByRoute).toHaveBeenCalledWith(
           subscription.stationId,
           subscription.routeId,
           subscription.region,
@@ -115,7 +115,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
         notificationsService.hasAlreadySent.mockResolvedValue(false);
         notificationsService.sendNotification.mockResolvedValue([
           { channel: 'console', success: true },
@@ -133,7 +133,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
 
         await scheduler.checkArrivalNotifications();
 
@@ -146,7 +146,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
         notificationsService.hasAlreadySent.mockResolvedValue(false);
         notificationsService.sendNotification.mockResolvedValue([
           { channel: 'console', success: true },
@@ -165,7 +165,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
         notificationsService.hasAlreadySent.mockResolvedValue(true);
 
         await scheduler.checkArrivalNotifications();
@@ -189,7 +189,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([
           arrival1,
           arrival2,
         ]);
@@ -215,7 +215,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
         notificationsService.hasAlreadySent.mockResolvedValue(false);
         notificationsService.sendNotification.mockResolvedValue([
           { channel: 'console', success: true },
@@ -246,14 +246,14 @@ describe('NotificationScheduler', () => {
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
 
         // First subscription throws error
-        arrivalsService.getArrivalsByRoute
+        busInfoProvider.getArrivalsByRoute
           .mockRejectedValueOnce(new Error('API error'))
           .mockResolvedValueOnce([]);
 
         await scheduler.checkArrivalNotifications();
 
         // Should still call for second subscription
-        expect(arrivalsService.getArrivalsByRoute).toHaveBeenCalledTimes(2);
+        expect(busInfoProvider.getArrivalsByRoute).toHaveBeenCalledTimes(2);
       });
 
       it('should handle empty active subscriptions', async () => {
@@ -262,7 +262,7 @@ describe('NotificationScheduler', () => {
         await expect(
           scheduler.checkArrivalNotifications(),
         ).resolves.not.toThrow();
-        expect(arrivalsService.getArrivalsByRoute).not.toHaveBeenCalled();
+        expect(busInfoProvider.getArrivalsByRoute).not.toHaveBeenCalled();
       });
 
       it('should handle no arrivals for a subscription', async () => {
@@ -270,7 +270,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([]);
 
         await expect(
           scheduler.checkArrivalNotifications(),
@@ -300,7 +300,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true); // 현재 8:15
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
         notificationsService.hasAlreadySent.mockResolvedValue(false);
         notificationsService.sendNotification.mockResolvedValue([
           { channel: 'console', success: true },
@@ -330,11 +330,11 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(false); // 현재 9:00 (시간대 외)
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
 
         await scheduler.checkArrivalNotifications();
 
-        expect(arrivalsService.getArrivalsByRoute).not.toHaveBeenCalled();
+        expect(busInfoProvider.getArrivalsByRoute).not.toHaveBeenCalled();
         expect(notificationsService.sendNotification).not.toHaveBeenCalled();
       });
 
@@ -351,7 +351,7 @@ describe('NotificationScheduler', () => {
 
         subscriptionsService.findActive.mockResolvedValue([subscription]);
         subscriptionsService.isWithinActiveTime.mockReturnValue(true);
-        arrivalsService.getArrivalsByRoute.mockResolvedValue([arrival]);
+        busInfoProvider.getArrivalsByRoute.mockResolvedValue([arrival]);
 
         await scheduler.checkArrivalNotifications();
 
