@@ -6,7 +6,6 @@ import { SubscriptionCard, SubscriptionData } from '@/components/dashboard/Subsc
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { StatusBar } from '@/components/dashboard/StatusBar';
 import { Button } from '@/components/ui/Button';
-import { Divider } from '@/components/ui/Divider';
 
 // Mock Data
 const initialMockSubscriptions: SubscriptionData[] = [
@@ -34,42 +33,18 @@ const initialMockSubscriptions: SubscriptionData[] = [
 ];
 
 const mockUser = {
-  name: 'Kim Gildong',
+  name: '김길동',
 };
 
 export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionData[]>(initialMockSubscriptions);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [currentDate, setCurrentDate] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
-  // Initialize client-side state
   useEffect(() => {
     setMounted(true);
     setLastUpdate(new Date());
-    setCurrentDate(
-      new Date().toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-    );
   }, []);
-
-  // Update current date every second
-  useEffect(() => {
-    if (!mounted) return;
-    const timer = setInterval(() => {
-      setCurrentDate(
-        new Date().toLocaleDateString('ko-KR', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        })
-      );
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [mounted]);
 
   // Simulate real-time updates every 30 seconds
   useEffect(() => {
@@ -87,12 +62,10 @@ export default function Dashboard() {
   }, [mounted]);
 
   const handleLogout = () => {
-    // Mock logout action
     console.log('Logout clicked');
   };
 
   const handleAddRoute = () => {
-    // Mock add route action
     console.log('Add route clicked');
   };
 
@@ -104,111 +77,103 @@ export default function Dashboard() {
     (sub) => sub.arrivalMinutes <= 3
   ).length;
 
-  // Sort subscriptions by arrival time (soonest first)
   const sortedSubscriptions = [...subscriptions].sort(
     (a, b) => a.arrivalMinutes - b.arrivalMinutes
   );
 
   return (
-    <div className="min-h-screen bg-transit-black noise-bg">
-      {/* Background Grid Pattern */}
-      <div className="fixed inset-0 grid-pattern opacity-30 pointer-events-none" />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <DashboardHeader userName={mockUser.name} onLogout={handleLogout} />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <DashboardHeader userName={mockUser.name} onLogout={handleLogout} />
-
-        {/* Main Content */}
-        <main className="py-8">
-          {/* Page Title Section */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold uppercase tracking-wider text-transit-yellow">
-                Dashboard
-              </h1>
-              <p className="text-sm text-transit-gray-light mt-1">
-                Real-time bus arrival monitoring
-              </p>
-            </div>
-
-            {subscriptions.length > 0 && (
-              <Button onClick={handleAddRoute}>
-                + Add Route
-              </Button>
-            )}
+      {/* Main Content */}
+      <main className="max-w-3xl mx-auto px-4 py-6">
+        {/* Page Title */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-text-primary">
+              대시보드
+            </h1>
+            <p className="text-sm text-text-secondary mt-0.5">
+              실시간 버스 도착 정보
+            </p>
           </div>
 
-          {/* Status Bar */}
-          {subscriptions.length > 0 && mounted && lastUpdate && (
+          {subscriptions.length > 0 && (
+            <Button onClick={handleAddRoute}>
+              + 노선 추가
+            </Button>
+          )}
+        </div>
+
+        {/* Status Bar */}
+        {subscriptions.length > 0 && mounted && lastUpdate && (
+          <div className="mb-6">
             <StatusBar
               totalSubscriptions={subscriptions.length}
               arrivingSoon={arrivingSoonCount}
               lastUpdate={lastUpdate}
             />
-          )}
+          </div>
+        )}
 
-          {/* Section Divider */}
-          <Divider label="Subscribed Routes" className="my-6" />
+        {/* Subscription List or Empty State */}
+        {subscriptions.length === 0 ? (
+          <EmptyState onAddRoute={handleAddRoute} />
+        ) : (
+          <div className="space-y-3">
+            {sortedSubscriptions.map((subscription, index) => (
+              <div
+                key={subscription.id}
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <SubscriptionCard
+                  subscription={subscription}
+                  onDelete={handleDeleteSubscription}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
-          {/* Subscription List or Empty State */}
-          {subscriptions.length === 0 ? (
-            <EmptyState onAddRoute={handleAddRoute} />
-          ) : (
-            <div className="space-y-4">
-              {sortedSubscriptions.map((subscription, index) => (
-                <div
-                  key={subscription.id}
-                  className="animate-slide-up"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <SubscriptionCard
-                    subscription={subscription}
-                    onDelete={handleDeleteSubscription}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Info Footer */}
+        {/* Info Footer */}
+        {subscriptions.length > 0 && (
           <div className="mt-8 py-4 border-t border-border">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-transit-gray-light uppercase tracking-wider">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-transit-red rounded-full" />
-                  3 min or less
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-status-arriving-text rounded-full" />
+                  3분 이하
                 </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-transit-yellow rounded-full" />
-                  4-7 min
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-status-soon-text rounded-full" />
+                  4-7분
                 </span>
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-transit-green rounded-full" />
-                  8+ min
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-status-normal-text rounded-full" />
+                  8분 이상
                 </span>
               </div>
               <div>
-                Data refreshes every 30 seconds
+                30초마다 자동 갱신
               </div>
             </div>
           </div>
-        </main>
+        )}
+      </main>
 
-        {/* Footer */}
-        <footer className="py-6 border-t border-border">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-transit-gray-light uppercase tracking-wider">
-              BusNoti v1.0.0
-            </span>
-            <span
-              className="text-xs text-transit-gray-light font-mono"
-              suppressHydrationWarning
-            >
-              {currentDate || '--/--/--'}
+      {/* Footer */}
+      <footer className="border-t border-border mt-auto">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between text-xs text-text-muted">
+            <span>BusNoti v1.0.0</span>
+            <span>
+              {mounted && new Date().toLocaleDateString('ko-KR')}
             </span>
           </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
