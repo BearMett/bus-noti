@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 
 export function RegisterForm() {
   const [name, setName] = useState('');
@@ -10,7 +11,7 @@ export function RegisterForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { register, isRegistering } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,13 +27,13 @@ export function RegisterForm() {
       return;
     }
 
-    setLoading(true);
-
-    // Mock register
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('Register successful', { name, email });
-
-    setLoading(false);
+    try {
+      await register({ email, password, name: name || undefined });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : '회원가입에 실패했습니다.',
+      );
+    }
   };
 
   return (
@@ -71,15 +72,17 @@ export function RegisterForm() {
         placeholder="비밀번호 재입력"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
-        error={confirmPassword && password !== confirmPassword ? '비밀번호가 일치하지 않습니다.' : undefined}
+        error={
+          confirmPassword && password !== confirmPassword
+            ? '비밀번호가 일치하지 않습니다.'
+            : undefined
+        }
         required
       />
 
-      {error && (
-        <p className="text-sm text-red-500">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <Button type="submit" fullWidth loading={loading}>
+      <Button type="submit" fullWidth loading={isRegistering}>
         회원가입
       </Button>
     </form>

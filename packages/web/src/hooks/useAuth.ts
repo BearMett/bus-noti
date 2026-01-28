@@ -1,102 +1,87 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { authApi } from '@/lib/api/auth';
 import { authStorage } from '@/lib/auth';
-import { api } from '@/lib/api';
+import type { LoginDto, RegisterDto } from '@busnoti/shared';
 
-interface AuthUser {
-  id: string;
-  email: string;
-  name?: string;
-  avatar?: string;
-}
-
-interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
-
-interface LoginDto {
-  email: string;
-  password: string;
-}
-
-interface RegisterDto {
-  email: string;
-  password: string;
-  name?: string;
-}
+export const authKeys = {
+  user: ['auth', 'user'] as const,
+};
 
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const router = useRouter();
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const userData = await api.get<AuthUser>('/auth/me');
-      setUser(userData);
-    } catch {
-      authStorage.clearTokens();
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: user,
+    isLoading,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: authKeys.user,
+    queryFn: authApi.getMe,
+    enabled: authStorage.isAuthenticated(),
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5분
+  });
 
-  useEffect(() => {
-    if (authStorage.isAuthenticated()) {
-      fetchUser();
-    } else {
-      setLoading(false);
-    }
-  }, [fetchUser]);
+  const loginMutation = useMutation({
+    mutationFn: (dto: LoginDto) => authApi.login(dto),
+    onSuccess: async (tokens) => {
+      authStorage.setTokens(tokens);
+      await queryClient.invalidateQueries({ queryKey: authKeys.user });
+      router.push('/');
+    },
+  });
 
-  const login = async (dto: LoginDto) => {
-    const tokens = await api.post<AuthTokens>('/auth/login', dto);
-    authStorage.setTokens(tokens);
-    await fetchUser();
-    router.push('/');
-  };
+  const registerMutation = useMutation({
+    mutationFn: (dto: RegisterDto) => authApi.register(dto),
+    onSuccess: async (tokens) => {
+      authStorage.setTokens(tokens);
+      await queryClient.invalidateQueries({ queryKey: authKeys.user });
+      router.push('/');
+    },
+  });
 
-  const register = async (dto: RegisterDto) => {
-    const tokens = await api.post<AuthTokens>('/auth/register', dto);
-    authStorage.setTokens(tokens);
-    await fetchUser();
-    router.push('/');
-  };
-
-  const logout = async () => {
-    const refreshToken = authStorage.getRefreshToken();
-    if (refreshToken) {
-      try {
-        await api.post('/auth/logout', { refreshToken });
-      } catch {
-        // Ignore logout errors
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const refreshToken = authStorage.getRefreshToken();
+      if (refreshToken) {
+        await authApi.logout(refreshToken).catch(() => {
+          // 로그아웃 실패해도 로컬 토큰 정리
+        });
       }
-    }
-    authStorage.clearTokens();
-    setUser(null);
-    router.push('/login');
-  };
+    },
+    onSuccess: () => {
+      authStorage.clearTokens();
+      queryClient.setQueryData(authKeys.user, null);
+      router.push('/login');
+    },
+  });
 
   const handleOAuthCallback = async (
     accessToken: string,
     refreshToken: string,
   ) => {
     authStorage.setTokens({ accessToken, refreshToken });
-    await fetchUser();
+    await queryClient.invalidateQueries({ queryKey: authKeys.user });
     router.push('/');
   };
 
   return {
     user,
-    loading,
+    isLoading,
     isAuthenticated: !!user,
-    login,
-    register,
-    logout,
+    login: loginMutation.mutateAsync,
+    loginError: loginMutation.error,
+    isLoggingIn: loginMutation.isPending,
+    register: registerMutation.mutateAsync,
+    registerError: registerMutation.error,
+    isRegistering: registerMutation.isPending,
+    logout: logoutMutation.mutateAsync,
+    isLoggingOut: logoutMutation.isPending,
     handleOAuthCallback,
+    refetchUser,
   };
 }

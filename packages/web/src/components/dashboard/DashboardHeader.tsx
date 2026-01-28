@@ -8,9 +8,14 @@ import { ThemeSelector } from '@/components/ui/ThemeSelector';
 interface DashboardHeaderProps {
   userName: string;
   onLogout: () => void;
+  isLoggingOut?: boolean;
 }
 
-export function DashboardHeader({ userName, onLogout }: DashboardHeaderProps) {
+export function DashboardHeader({
+  userName,
+  onLogout,
+  isLoggingOut,
+}: DashboardHeaderProps) {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [mounted, setMounted] = useState(false);
 
@@ -56,7 +61,12 @@ export function DashboardHeader({ userName, onLogout }: DashboardHeaderProps) {
             <span className="text-sm text-text-secondary hidden sm:block">
               {userName}
             </span>
-            <Button variant="ghost" size="sm" onClick={onLogout}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLogout}
+              loading={isLoggingOut}
+            >
               로그아웃
             </Button>
           </div>
