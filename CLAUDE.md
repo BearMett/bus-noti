@@ -120,6 +120,37 @@ import { Region, Subscription } from '@busnoti/shared';
 import { Region, Subscription } from '@prisma/client';
 ```
 
+### React Best Practices
+
+1. **NEVER call setState in useEffect for initialization** (violates `react-hooks/set-state-in-effect`)
+
+   ```typescript
+   // ❌ WRONG - Causes cascading renders
+   const [name, setName] = useState('');
+   useEffect(() => {
+     if (data) {
+       setName(data.name);  // BAD! Triggers extra render
+     }
+   }, [data]);
+
+   // ✅ CORRECT - Initialize directly in useState
+   const [name, setName] = useState(data?.name ?? '');
+   ```
+
+2. **When to use useEffect**
+   - ✅ Subscribing to external systems (WebSockets, event listeners)
+   - ✅ Fetching data on mount (but prefer React Query)
+   - ✅ Synchronizing with browser APIs (localStorage, geolocation)
+   - ❌ Initializing state from props/data
+   - ❌ Calculating derived values (use useMemo or calculate during render)
+
+3. **Form state initialization pattern**
+   - If data loads before form renders (guarded by loading state), initialize directly
+   - Use `data?.field ?? ''` for safe access with fallback
+   - Remove unnecessary `useEffect`, `useRef`, and initialization logic
+
+4. **Reference:** [React: You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
+
 ## API Keys Required
 
 1. **경기도 GBIS API**: https://www.data.go.kr/data/15080666/openapi.do
