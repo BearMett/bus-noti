@@ -1,8 +1,6 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Divider } from '@/components/ui/Divider';
 
 interface EmptyStateProps {
   onAddRoute: () => void;
@@ -10,54 +8,39 @@ interface EmptyStateProps {
 
 export function EmptyState({ onAddRoute }: EmptyStateProps) {
   return (
-    <Card variant="bordered" withNoise className="max-w-lg mx-auto">
-      <CardContent className="py-12 px-8">
-        <div className="flex flex-col items-center text-center">
-          {/* Icon */}
-          <div className="w-20 h-20 bg-transit-gray flex items-center justify-center mb-6">
-            <svg
-              className="w-10 h-10 text-transit-yellow"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M8 6v6" />
-              <path d="M16 6v6" />
-              <path d="M2 12h20" />
-              <path d="M6 18h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              <circle cx="6" cy="18" r="2" />
-              <circle cx="18" cy="18" r="2" />
-            </svg>
-          </div>
+    <div className="flex flex-col items-center justify-center py-16 px-4">
+      {/* Icon */}
+      <div className="w-16 h-16 bg-surface rounded-2xl flex items-center justify-center mb-4">
+        <svg
+          className="w-8 h-8 text-text-muted"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M8 6v6m8-6v6M2 12h20M6 18h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+          <circle cx="6" cy="18" r="2" strokeWidth={1.5} />
+          <circle cx="18" cy="18" r="2" strokeWidth={1.5} />
+        </svg>
+      </div>
 
-          {/* Title */}
-          <h3 className="text-xl font-bold uppercase tracking-wider text-transit-yellow mb-3">
-            No Subscriptions
-          </h3>
+      {/* Text */}
+      <h3 className="text-lg font-semibold text-text-primary mb-1">
+        구독 중인 노선이 없습니다
+      </h3>
+      <p className="text-sm text-text-secondary mb-6 text-center">
+        자주 이용하는 버스 노선을 추가하고<br />
+        실시간 도착 알림을 받아보세요.
+      </p>
 
-          {/* Description */}
-          <p className="text-transit-gray-light text-sm leading-relaxed mb-6">
-            Start tracking your bus routes by adding your first subscription.
-            <br />
-            You will receive real-time arrival notifications.
-          </p>
-
-          <Divider variant="warning" className="w-full mb-6" />
-
-          {/* CTA */}
-          <Button onClick={onAddRoute} size="lg">
-            + Add Your First Route
-          </Button>
-
-          {/* Hint */}
-          <p className="text-xs text-transit-gray-light mt-4 uppercase tracking-wider">
-            Search by station name or route number
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Action */}
+      <Button onClick={onAddRoute}>
+        + 노선 추가하기
+      </Button>
+    </div>
   );
 }
