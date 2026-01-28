@@ -1,26 +1,347 @@
 @import "tailwindcss";
 
+/* Transit Brutalist Design System */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core Colors - Warning/Transit inspired */
+  --transit-yellow: #FFD100;
+  --transit-yellow-dim: #B89500;
+  --transit-black: #0D0D0D;
+  --transit-dark: #1A1A1A;
+  --transit-red: #FF3333;
+  --transit-red-dim: #CC2929;
+  --transit-green: #00FF66;
+  --transit-green-dim: #00CC52;
+  --transit-blue: #0099FF;
+  --transit-gray: #333333;
+  --transit-gray-light: #666666;
+
+  /* Semantic Colors */
+  --background: var(--transit-black);
+  --foreground: var(--transit-yellow);
+  --surface: var(--transit-dark);
+  --surface-elevated: #242424;
+  --border: var(--transit-gray);
+  --border-accent: var(--transit-yellow);
+
+  /* Text Colors */
+  --text-primary: var(--transit-yellow);
+  --text-secondary: var(--transit-gray-light);
+  --text-muted: #4D4D4D;
+  --text-inverse: var(--transit-black);
+
+  /* Status Colors */
+  --status-arriving: var(--transit-red);
+  --status-soon: var(--transit-yellow);
+  --status-normal: var(--transit-green);
+
+  /* Animation Timing */
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-border-accent: var(--border-accent);
+
+  --color-transit-yellow: var(--transit-yellow);
+  --color-transit-yellow-dim: var(--transit-yellow-dim);
+  --color-transit-black: var(--transit-black);
+  --color-transit-dark: var(--transit-dark);
+  --color-transit-red: var(--transit-red);
+  --color-transit-red-dim: var(--transit-red-dim);
+  --color-transit-green: var(--transit-green);
+  --color-transit-green-dim: var(--transit-green-dim);
+  --color-transit-blue: var(--transit-blue);
+  --color-transit-gray: var(--transit-gray);
+  --color-transit-gray-light: var(--transit-gray-light);
+
+  --font-sans: var(--font-display);
+  --font-mono: var(--font-led);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Custom Animations */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    text-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+    opacity: 1;
   }
+  50% {
+    text-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
+    opacity: 0.9;
+  }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.9; }
+  97% { opacity: 1; }
+}
+
+@keyframes slide-in-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes count-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  10% { transform: translateY(0); opacity: 1; }
+  90% { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-display), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* Utility Classes */
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-flicker {
+  animation: flicker 4s linear infinite;
+}
+
+.animate-slide-up {
+  animation: slide-in-up 0.4s ease-out forwards;
+}
+
+/* Scanline Overlay Effect */
+.scanline-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* LED Text Glow Effect */
+.led-glow {
+  text-shadow:
+    0 0 4px currentColor,
+    0 0 8px currentColor,
+    0 0 12px currentColor;
+}
+
+.led-glow-intense {
+  text-shadow:
+    0 0 4px currentColor,
+    0 0 8px currentColor,
+    0 0 16px currentColor,
+    0 0 24px currentColor;
+}
+
+/* Noise Texture */
+.noise-bg {
+  position: relative;
+}
+
+.noise-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Transit Border Style */
+.transit-border {
+  border: 2px solid var(--transit-yellow);
+  box-shadow:
+    inset 0 0 0 1px var(--transit-black),
+    0 0 0 1px var(--transit-yellow);
+}
+
+/* Warning Stripe Pattern */
+.warning-stripes {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--transit-yellow),
+    var(--transit-yellow) 10px,
+    var(--transit-black) 10px,
+    var(--transit-black) 20px
+  );
+}
+
+/* Form Input Styles */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  background: var(--transit-dark);
+  border: 2px solid var(--transit-gray);
+  color: var(--transit-yellow);
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--transit-yellow);
+  box-shadow: 0 0 0 1px var(--transit-yellow), 0 0 12px rgba(255, 209, 0, 0.3);
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: var(--transit-gray-light);
+}
+
+/* Button Base Styles */
+.btn-transit {
+  background: var(--transit-yellow);
+  color: var(--transit-black);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-transit:hover {
+  background: #FFE033;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 209, 0, 0.4);
+}
+
+.btn-transit:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-transit:disabled {
+  background: var(--transit-gray);
+  color: var(--transit-gray-light);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-transit-outline {
+  background: transparent;
+  color: var(--transit-yellow);
+  border: 2px solid var(--transit-yellow);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-transit-outline:hover {
+  background: var(--transit-yellow);
+  color: var(--transit-black);
+}
+
+/* Status Badge Styles */
+.status-arriving {
+  background: var(--transit-red);
+  color: white;
+  animation: glow-pulse 1s ease-in-out infinite;
+}
+
+.status-soon {
+  background: var(--transit-yellow);
+  color: var(--transit-black);
+}
+
+.status-normal {
+  background: var(--transit-green);
+  color: var(--transit-black);
+}
+
+/* Card Styles */
+.transit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.transit-card-elevated {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Grid Pattern Background */
+.grid-pattern {
+  background-image:
+    linear-gradient(var(--transit-gray) 1px, transparent 1px),
+    linear-gradient(90deg, var(--transit-gray) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: -1px -1px;
+}
+
+/* Selection Styles */
+::selection {
+  background: var(--transit-yellow);
+  color: var(--transit-black);
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--transit-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--transit-gray);
+  border: 1px solid var(--transit-dark);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--transit-yellow-dim);
 }
