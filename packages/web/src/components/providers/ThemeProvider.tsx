@@ -92,18 +92,19 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setTheme(prev => ({ ...prev, colorMode }));
   };
 
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return (
-      <div style={{ visibility: 'hidden' }}>
-        {children}
-      </div>
-    );
-  }
+  const value: ThemeContextValue = {
+    theme,
+    setPreset,
+    setColorMode,
+    resolvedColorMode,
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setPreset, setColorMode, resolvedColorMode }}>
-      {children}
+    <ThemeContext.Provider value={value}>
+      {/* Prevent hydration mismatch by hiding until mounted */}
+      <div style={{ visibility: mounted ? 'visible' : 'hidden' }}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }
