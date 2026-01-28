@@ -1,2 +1,13 @@
 packages:
-  - 'packages/*'
+  - packages/*
+
+ignoredBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/engines'
+  - prisma
+  - sharp
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - bcrypt
+  - better-sqlite3
